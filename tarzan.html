@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Η Φυσική του Ταρζάν: Κεντρομόλος & Τάση</title>
+    <style>
+        /* Βασικές Μεταβλητές (Ημέρα) */
+        :root {
+            --bg-sky: #38bdf8;
+            --bg-sky-bottom: #bae6fd;
+            --panel-bg: rgba(255, 255, 255, 0.92);
+            --text-color: #1e293b;
+            --accent: #16a34a;
+            --vine-color: #15803d;
+            --tension-color: #f97316; /* Πορτοκαλί για την Τάση */
+            --weight-color: #2563eb;  /* Μπλε */
+            --velocity-color: #dc2626; /* Κόκκινο */
+        }
+
+        /* Μεταβλητές (Νύχτα) */
+        body.night {
+            --bg-sky: #020617;
+            --bg-sky-bottom: #0f2a4a;
+            --panel-bg: rgba(15, 23, 42, 0.88);
+            --text-color: #f8fafc;
+            --accent: #4ade80;
+            --vine-color: #86efac;
+            --tension-color: #fb923c; 
+            --weight-color: #60a5fa;
+            --velocity-color: #f87171;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, var(--bg-sky) 0%, var(--bg-sky-bottom) 100%);
+            color: var(--text-color);
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* Πάνελ Ελέγχου (Αριστερά) */
+        .controls {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 320px;
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        /* Εκπαιδευτικό Πάνελ (Δεξιά) */
+        .edu-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 380px;
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+            max-height: 95vh;
+            overflow-y: auto;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+        .edu-panel.hidden {
+            transform: translateX(120%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .edu-section {
+            background: rgba(0,0,0,0.04);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+        body.night .edu-section { background: rgba(255,255,255,0.05); }
+        .edu-section h3 { margin: 0 0 8px 0; color: var(--accent); font-size: 1.05rem; display: flex; align-items: center; gap: 5px;}
+        .edu-section p, .edu-section ul { margin: 0; font-size: 0.9rem; line-height: 1.5; }
+        .edu-section ul { padding-left: 20px; margin-top: 5px; }
+
+        h1 { font-size: 1.3rem; margin: 0; color: var(--accent); text-transform: uppercase; text-align: center; }
+        .header-buttons { display: flex; justify-content: space-between; margin-bottom: 5px; }
+
+        .top-btn {
+            background: none; border: 2px solid var(--accent); color: var(--accent);
+            border-radius: 20px; padding: 5px 12px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 0.85rem;
+        }
+        .top-btn:hover { background: var(--accent); color: var(--panel-bg); }
+        .top-btn.active { background: var(--accent); color: white; }
+
+        .control-group { display: flex; flex-direction: column; gap: 2px; }
+        label { font-weight: bold; font-size: 0.9rem; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--accent); }
+        .value-display { font-family: monospace; font-size: 1.1rem; font-weight: bold; color: var(--accent); }
+
+        .btn {
+            background-color: var(--accent); color: white; border: none; padding: 12px;
+            border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold;
+            text-transform: uppercase; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.2s;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-reset { background-color: #ef4444; }
+
+        .break-warning {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px dashed #ef4444;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .break-warning label, .break-warning .value-display { color: #ef4444; }
+
+        .live-data { border-top: 2px dashed var(--accent); padding-top: 10px; font-family: monospace; font-size: 0.95rem; line-height: 1.5; }
+        .legend { font-size: 0.85rem; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 5px; }
+        body.night .legend { background: rgba(255,255,255,0.05); }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+        .legend span { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+
+        .footer-note {
+            text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 10px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px;
+        }
+        body.night .footer-note { color: #94a3b8; border-color: rgba(255,255,255,0.1); }
+
+        #simCanvas { display: block; width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body class="day" id="bodyEl">
+
+    <div class="controls">
+        <div class="header-buttons">
+            <button class="top-btn" id="themeToggle">🌙 Νύχτα</button>
+            <button class="top-btn" id="eduToggle">📖 Οδηγός</button>
+        </div>
+        <h1>Η Φυσική του Ταρζάν</h1>
+        <p style="font-size: 0.8rem; margin: 0; text-align: center;">Δυναμική της Κυκλικής Κίνησης</p>
+
+        <div class="control-group">
+            <label>Αρχική Γωνία (θ₀): <span id="thetaVal" class="value-display">60</span>°</label>
+            <input type="range" id="thetaSlider" min="10" max="89" value="60" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>Μάζα Ταρζάν (m): <span id="massVal" class="value-display">80</span> kg</label>
+            <input type="range" id="massSlider" min="40" max="120" value="80" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>Μήκος Κλιματσίδας (L): <span id="lengthVal" class="value-display">4.0</span> m</label>
+            <input type="range" id="lengthSlider" min="2" max="6" value="4" step="0.1">
+        </div>
+
+        <div class="control-group break-warning">
+            <label>⚡ Όριο Θραύσης: <span id="breakVal" class="value-display">1150</span> N</label>
+            <input type="range" id="breakSlider" min="900" max="1500" value="1150" step="10">
+        </div>
+
+        <button class="btn" id="startBtn">Εκκίνηση / Παύση</button>
+        <button class="btn btn-reset" id="resetBtn">Επαναφορά</button>
+
+        <div class="live-data">
+            Ταχύτητα (v): <span id="liveV">0.00</span> m/s<br>
+            Γωνία (θ): <span id="liveTheta">0.0</span>°<br>
+            Τάση (T): <span id="liveT" style="color:var(--tension-color); font-weight:bold; font-size:1.1rem;">0.00</span> N
+            <div id="breakStatus" style="color:#ef4444; font-weight:bold; display:none;">Η ΚΛΙΜΑΤΣΙΔΑ ΕΣΠΑΣΕ!</div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><span style="background: var(--tension-color);"></span> Τάση Νήματος (T)</div>
+            <div class="legend-item"><span style="background: var(--weight-color);"></span> Βάρος (w)</div>
+            <div class="legend-item"><span style="background: var(--velocity-color);"></span> Ταχύτητα (v)</div>
+        </div>
+
+        <div class="footer-note">
+            Διαδραστικό Μαθησιακό Αντικείμενο<br>Φυσική Β' Λυκείου ΓΕΛ
+        </div>
+    </div>
+
+    <div class="edu-panel hidden" id="eduPanel">
+        <h1 style="font-size: 1.1rem; border-bottom: 2px solid var(--accent); padding-bottom: 5px;">Εκπαιδευτικός Οδηγός</h1>
+        
+        <div class="edu-section">
+            <h3>🎯 Στόχος</h3>
+            <p>Η κατανόηση του ρόλου της κεντρομόλου δύναμης, η οπτικοποίηση των διανυσμάτων και η μελέτη των συνθηκών κάτω από τις οποίες μεγιστοποιείται η τάση του νήματος.</p>
+        </div>
+
+        <div class="edu-section">
+            <h3>📝 Οδηγίες</h3>
+            <ul>
+                <li>Άλλαξε την αρχική γωνία και παρατήρησε πώς μεταβάλλεται το διάνυσμα της ταχύτητας.</li>
+                <li>Δες πώς αυξομειώνεται η Τάση (πορτοκαλί) σε σχέση με το σταθερό Βάρος (μπλε).</li>
+                <li>Μείωσε το Όριο Θραύσης για να δεις την ελεύθερη πτώση του Ταρζάν!</li>
+            </ul>
+        </div>
+
+        <div class="edu-section">
+            <h3>🔍 Δραστηριότητες Διερεύνησης</h3>
+            <ol style="margin:0; padding-left: 20px; font-size: 0.9rem; line-height: 1.4;">
+                <li>Σε ποιο σημείο της τροχιάς το διάνυσμα της Τάσης γίνεται μέγιστο και γιατί;</li>
+                <li>Αν αυξήσεις το μήκος της κλιματσίδας, η μέγιστη τάση αυξάνεται ή μειώνεται; Δοκίμασέ το.</li>
+                <li>Πειραματίσου: Με μάζα 80kg και όριο θραύσης 1000N, βρες την ασφαλέστερη μέγιστη γωνία εκτροπής.</li>
+            </ol>
+        </div>
+
+        <div class="edu-section" style="background: rgba(22, 163, 74, 0.1); border-color: #15803d;">
+            <h3>📚 Συμπέρασμα - Θεωρία</h3>
+            <p>Η κεντρομόλος (<strong>F<sub>κ</sub></strong>) δεν είναι μια ανεξάρτητη δύναμη, αλλά η συνισταμένη στην ακτινική διεύθυνση: 
+            <strong>F<sub>κ</sub> = T - m·g·cos(θ) = m·v²/L</strong></p>
+            <p style="margin-top: 5px;">Λύνοντας ως προς την τάση έχουμε:<br> 
+            <strong>T = m·g·cos(θ) + m·v²/L</strong></p>
+            <p style="margin-top: 5px;">Στο <em>κατώτερο σημείο</em> (θ=0°), η ταχύτητα είναι μέγιστη και το cos(0°)=1. Εκεί η κλιματσίδα δέχεται τη <strong>μέγιστη καταπόνηση</strong>!</p>
+        </div>
+    </div>
+
+    <canvas id="simCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const bodyEl = document.getElementById('bodyEl');
+        const themeToggle = document.getElementById('themeToggle');
+        const eduToggle = document.getElementById('eduToggle');
+        const eduPanel = document.getElementById('eduPanel');
+
+        // Toggle Theme
+        let isNight = false;
+        themeToggle.addEventListener('click', () => {
+            isNight = !isNight;
+            bodyEl.className = isNight ? 'night' : 'day';
+            themeToggle.innerText = isNight ? '☀️ Ημέρα' : '🌙 Νύχτα';
+            draw();
+        });
+
+        // Toggle Educational Panel
+        let eduOpen = false;
+        eduToggle.addEventListener('click', () => {
+            eduOpen = !eduOpen;
+            if(eduOpen) {
+                eduPanel.classList.remove('hidden');
+                eduToggle.classList.add('active');
+            } else {
+                eduPanel.classList.add('hidden');
+                eduToggle.classList.remove('active');
+            }
+        });
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            draw();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // UI Elements
+        const thetaSlider = document.getElementById('thetaSlider');
+        const massSlider = document.getElementById('massSlider');
+        const lengthSlider = document.getElementById('lengthSlider');
+        const breakSlider = document.getElementById('breakSlider');
+        
+        // Φυσικές Σταθερές
+        const g = 9.81;
+        const scale = 70; 
+        let originX, originY, groundY;
+
+        // Φυσικές Μεταβλητές
+        let m, L, theta0, T_max;
+        let theta, omega;
+        
+        // Μεταβλητές Πτώσης
+        let isBroken = false;
+        let hitGround = false;
+        let fallX_m, fallY_m; 
+        let fallVx, fallVy;
+
+        let isRunning = false;
+
+        function initSystem() {
+            m = parseFloat(massSlider.value);
+            L = parseFloat(lengthSlider.value);
+            theta0 = parseFloat(thetaSlider.value) * Math.PI / 180;
+            T_max = parseFloat(breakSlider.value);
+            
+            theta = theta0;
+            omega = 0;
+            isBroken = false;
+            hitGround = false;
+            document.getElementById('breakStatus').style.display = 'none';
+            
+            updateLiveHUD();
+            resizeCanvas(); 
+        }
+
+        thetaSlider.oninput = () => { document.getElementById('thetaVal').innerText = thetaSlider.value; if(!isRunning) initSystem(); };
+        massSlider.oninput = () => { document.getElementById('massVal').innerText = massSlider.value; if(!isRunning) initSystem(); };
+        lengthSlider.oninput = () => { document.getElementById('lengthVal').innerText = parseFloat(lengthSlider.value).toFixed(1); if(!isRunning) initSystem(); };
+        breakSlider.oninput = () => { document.getElementById('breakVal').innerText = breakSlider.value; T_max = parseFloat(breakSlider.value); };
+
+        document.getElementById('startBtn').onclick = () => {
+            if (hitGround) initSystem(); 
+            isRunning = !isRunning;
+            if(isRunning) lastTime = performance.now();
+        };
+        document.getElementById('resetBtn').onclick = () => {
+            isRunning = false;
+            initSystem();
+        };
+
+        // Κύριος Βρόχος Φυσικής
+        let lastTime = 0;
+        function updatePhysics(timestamp) {
+            if (!isRunning) {
+                lastTime = timestamp;
+                requestAnimationFrame(updatePhysics);
+                return;
+            }
+
+            let dt = (timestamp - lastTime) / 1000;
+            if (dt > 0.03) dt = 0.03; 
+            lastTime = timestamp;
+
+            let steps = 5;
+            let ddt = dt / steps;
+
+            for (let i = 0; i < steps; i++) {
+                if (!isBroken) {
+                    let alpha = -(g / L) * Math.sin(theta);
+                    omega += alpha * ddt;
+                    theta += omega * ddt;
+
+                    let v_mag = Math.abs(omega * L);
+                    let T = m * g * Math.cos(theta) + m * (v_mag * v_mag) / L;
+
+                    // Έλεγχος Θραύσης
+                    if (T > T_max) {
+                        isBroken = true;
+                        document.getElementById('breakStatus').style.display = 'block';
+                        
+                        fallVx = L * omega * Math.cos(theta);
+                        fallVy = -L * omega * Math.sin(theta);
+                        
+                        fallX_m = L * Math.sin(theta);
+                        fallY_m = L * Math.cos(theta) + (40 / scale); 
+                    }
+                } else if (!hitGround) {
+                    fallVy += g * ddt; 
+                    fallX_m += fallVx * ddt;
+                    fallY_m += fallVy * ddt;
+
+                    let cmY_pixel = originY + fallY_m * scale;
+                    if (cmY_pixel + 65 > groundY) {
+                        hitGround = true;
+                        fallY_m = (groundY - originY - 65) / scale;
+                        fallVx = 0;
+                        fallVy = 0;
+                        isRunning = false; 
+                    }
+                }
+            }
+
+            updateLiveHUD();
+            draw();
+            requestAnimationFrame(updatePhysics);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Το κέντρο μετατοπίστηκε ελαφρώς για να χωράνε τα δυο πάνελ
+            originX = canvas.width / 2; 
+            originY = 120;
+            groundY = canvas.height - 60; 
+
+            drawBackground();
+
+            let handX, handY, cmX, cmY;
+
+            if (!isBroken) {
+                handX = originX + L * Math.sin(theta) * scale;
+                handY = originY + L * Math.cos(theta) * scale;
+                cmX = handX;
+                cmY = handY + 40;
+            } else {
+                cmX = originX + fallX_m * scale;
+                cmY = originY + fallY_m * scale;
+                handX = cmX;
+                handY = cmY - 40;
+            }
+
+            // 1. Σχεδίαση Κλιματσίδας
+            let vineColor = getComputedStyle(bodyEl).getPropertyValue('--vine-color').trim();
+            ctx.strokeStyle = vineColor;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            if (!isBroken) {
+                ctx.moveTo(originX, originY);
+                ctx.lineTo(handX, handY);
+            } else {
+                ctx.moveTo(originX, originY);
+                ctx.lineTo(originX, originY + 100);
+            }
+            ctx.stroke();
+
+            // 2. Σχεδίαση Ταρζάν
+            drawTarzan(handX, handY);
+
+            // 3. Διανύσματα (Μπροστά από τον Ταρζάν)
+            if (!hitGround) {
+                let fScale = 0.16; 
+                let weightColor = getComputedStyle(bodyEl).getPropertyValue('--weight-color').trim();
+                let velocityColor = getComputedStyle(bodyEl).getPropertyValue('--velocity-color').trim();
+                let tensionColor = getComputedStyle(bodyEl).getPropertyValue('--tension-color').trim();
+
+                drawArrow(cmX, cmY, cmX, cmY + m * g * fScale, weightColor, 'w');
+
+                let vScale = 15; 
+                let curVx = isBroken ? fallVx : L * Math.cos(theta) * omega;
+                let curVy = isBroken ? fallVy : -L * Math.sin(theta) * omega;
+                drawArrow(cmX, cmY, cmX + curVx * vScale, cmY + curVy * vScale, velocityColor, 'v');
+
+                if (!isBroken) {
+                    let v_mag = Math.abs(omega * L);
+                    let T = m * g * Math.cos(theta) + m * (v_mag * v_mag) / L;
+                    let t_dirX = -Math.sin(theta);
+                    let t_dirY = -Math.cos(theta);
+                    
+                    // Η τάση ξεκινά από τα χέρια κατά μήκος του νήματος
+                    drawArrow(handX, handY, handX + T * fScale * t_dirX, handY + T * fScale * t_dirY, tensionColor, 'T');
+                }
+            }
+
+            // 4. Εφέ Πρόσκρουσης ΓΔΟΥΠ
+            if (hitGround) {
+                ctx.font = "italic 900 60px Arial";
+                ctx.fillStyle = "#ef4444";
+                ctx.strokeStyle = "#fde047";
+                ctx.lineWidth = 4;
+                ctx.textAlign = "center";
+                ctx.strokeText("ΓΔΟΥΠ!", cmX + 80, cmY);
+                ctx.fillText("ΓΔΟΥΠ!", cmX + 80, cmY);
+                ctx.textAlign = "left"; 
+            }
+        }
+
+        function drawBackground() {
+            ctx.beginPath();
+            ctx.arc(canvas.width - 200, 150, 50, 0, Math.PI*2);
+            ctx.fillStyle = isNight ? '#fde047' : '#fef08a';
+            ctx.shadowColor = isNight ? '#fde047' : '#fef08a';
+            ctx.shadowBlur = 50;
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+
+            // ΔΕΝΤΡΟ (Διορθώθηκε το χρώμα του κορμού)
+            ctx.fillStyle = isNight ? '#1e293b' : '#451a03';
+            
+            ctx.beginPath();
+            ctx.moveTo(originX - 350, canvas.height); 
+            ctx.lineTo(originX - 200, originY - 40);  
+            ctx.lineTo(originX + 80, originY - 20);   
+            ctx.lineTo(originX + 80, originY + 10);   
+            ctx.lineTo(originX - 150, originY + 20);  
+            ctx.lineTo(originX - 150, canvas.height); 
+            ctx.fill();
+
+            // Φύλλωμα Δέντρου
+            ctx.fillStyle = isNight ? '#064e3b' : '#15803d';
+            ctx.beginPath();
+            ctx.arc(originX - 250, originY - 120, 100, 0, Math.PI*2);
+            ctx.arc(originX - 120, originY - 100, 80, 0, Math.PI*2);
+            ctx.arc(originX + 20, originY - 80, 70, 0, Math.PI*2);
+            ctx.fill();
+
+            // Έδαφος Ζούγκλας
+            ctx.fillStyle = isNight ? '#022c22' : '#166534';
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+            
+            ctx.strokeStyle = isNight ? '#064e3b' : '#22c55e';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(canvas.width, groundY);
+            ctx.stroke();
+
+            // Κατακόρυφος Άξονας
+            ctx.strokeStyle = isNight ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 8]);
+            ctx.beginPath();
+            ctx.moveTo(originX, originY);
+            ctx.lineTo(originX, groundY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawTarzan(hx, hy) {
+            ctx.save();
+            ctx.translate(hx, hy);
+
+            let skinColor = isNight ? '#b48a60' : '#e6bc98';
+            let clothColor = isNight ? '#854d0e' : '#ca8a04';
+            let hairColor = isNight ? '#271c19' : '#432818';
+
+            ctx.strokeStyle = skinColor;
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(-15, 30); 
+            ctx.moveTo(0, 0); ctx.lineTo(15, 30);  
+            ctx.stroke();
+
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(0, 25, 12, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.fillStyle = hairColor;
+            ctx.beginPath();
+            ctx.arc(0, 23, 13, Math.PI, Math.PI*2.3);
+            ctx.fill();
+
+            ctx.strokeStyle = skinColor;
+            ctx.lineWidth = 18;
+            ctx.beginPath();
+            ctx.moveTo(0, 38);
+            ctx.lineTo(0, 65);
+            ctx.stroke();
+
+            ctx.fillStyle = clothColor;
+            ctx.beginPath();
+            ctx.moveTo(-11, 58);
+            ctx.lineTo(11, 58);
+            ctx.lineTo(7, 80);
+            ctx.lineTo(-7, 80);
+            ctx.fill();
+
+            ctx.strokeStyle = skinColor;
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.moveTo(-6, 75); ctx.lineTo(-8, 105); 
+            ctx.moveTo(6, 75); ctx.lineTo(8, 105);   
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawArrow(fromx, fromy, tox, toy, color, label) {
+            let dx = tox - fromx;
+            let dy = toy - fromy;
+            let mag = Math.sqrt(dx*dx + dy*dy);
+            
+            if(mag < 5) return; 
+
+            let angle = Math.atan2(dy, dx);
+            let headlen = 12; 
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 4;
+            
+            ctx.beginPath();
+            ctx.moveTo(fromx, fromy);
+            ctx.lineTo(tox, toy);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+
+            ctx.font = "bold 20px Arial";
+            ctx.fillText(label, tox + 12 * Math.cos(angle), toy + 12 * Math.sin(angle) + 5);
+        }
+
+        function updateLiveHUD() {
+            if (!isBroken) {
+                let v_mag = Math.abs(omega * L);
+                let T = m * g * Math.cos(theta) + m * (v_mag * v_mag) / L;
+
+                document.getElementById('liveV').innerText = v_mag.toFixed(2);
+                document.getElementById('liveTheta').innerText = Math.abs((theta * 180 / Math.PI).toFixed(1));
+                document.getElementById('liveT').innerText = T.toFixed(0); 
+            } else {
+                let v_mag = Math.sqrt(fallVx*fallVx + fallVy*fallVy);
+                document.getElementById('liveV').innerText = v_mag.toFixed(2);
+                document.getElementById('liveT').innerText = "0"; 
+            }
+        }
+
+        initSystem();
+        requestAnimationFrame(updatePhysics);
+
+    </script>
+</body>
+</html>

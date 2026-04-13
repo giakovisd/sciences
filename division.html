@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Εργαστήριο Διαίρεσης Πολυωνύμων</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --error: #dc2626;
+            --warning: #ca8a04;
+            --bg: #f8fafc;
+            --cell-width: 55px;
+            --separator-width: 15px;
+            --line-color: #dc2626; 
+            --line-thickness: 3px;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: fit-content;
+            min-width: 700px;
+            max-width: 95vw;
+            position: relative;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Inputs */
+        .input-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .input-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .input-group input { 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            width: 180px;
+        }
+
+        /* Grid System */
+        .division-container {
+            display: grid;
+            gap: 0; 
+            margin-top: 20px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            justify-content: center;
+        }
+
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 45px;
+            width: var(--cell-width);
+            font-weight: bold;
+            font-size: 1.1em;
+            position: relative;
+        }
+
+        .header-cell {
+            background: #f1f5f9;
+            font-size: 0.8em;
+            color: #64748b;
+            margin: 2px;
+            border-radius: 4px;
+            height: 30px;
+        }
+
+        /* Separators */
+        .vertical-separator {
+            width: var(--separator-width) !important;
+            min-width: var(--separator-width) !important;
+            position: relative;
+        }
+        
+        .vertical-separator::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: var(--line-color);
+            transform: translateX(-50%);
+        }
+
+        .horizontal-separator {
+            border-bottom: var(--line-thickness) solid var(--line-color);
+        }
+
+        .border-subtraction {
+            border-bottom: 2px solid #94a3b8;
+        }
+
+        /* User Inputs */
+        .user-input {
+            width: 45px;
+            height: 35px;
+            text-align: center;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1em;
+        }
+        .user-input:focus { border-color: var(--primary); outline: none; }
+        .user-input.correct { border-color: var(--success); background: #dcfce7; }
+        .user-input.wrong { border-color: var(--error); background: #fee2e2; }
+
+        /* Feedback & Identity */
+        .feedback-box {
+            margin: 20px auto;
+            padding: 15px;
+            border-radius: 8px;
+            background: #eff6ff;
+            border-left: 5px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 800px;
+            min-height: 50px;
+        }
+
+        .identity-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0fdf4;
+            border: 2px solid #16a34a;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .identity-title {
+            color: #166534;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .identity-formula {
+            font-size: 1.3em;
+            font-family: 'Times New Roman', serif;
+            color: #15803d;
+        }
+
+        .actions { display: flex; gap: 10px; }
+        button.action-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: 0.2s;
+        }
+        .btn-check { background: var(--success); }
+        .btn-solve { background: var(--warning); }
+        .btn-next { background: var(--primary); }
+        .btn-reset { background: #64748b; }
+
+        .quotient-area { color: var(--primary); font-size: 1.2em; }
+        .sign-change { color: #db2777; }
+        .dividend-style { font-size: 1.1em; }
+
+        /* Credits */
+        .credits {
+            margin-top: 40px;
+            font-size: 0.85em;
+            color: #94a3b8;
+            font-style: italic;
+            text-align: left;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 10px;
+        }
+        
+    </style>
+</head>
+<body>
+
+<div class="main-card">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('demo')">🔵 Επίδειξη</button>
+        <button class="tab-btn" onclick="switchTab('practice')">✏️ Εξάσκηση (Διαδραστικό)</button>
+    </div>
+
+    <div class="input-row">
+        <div class="input-group">
+            <label>Διαιρετέος P(x):</label>
+            <input type="text" id="dividend" value="1, -4, 2, 5, 4" placeholder="π.χ. 1, 0, -3, 2">
+        </div>
+        <div class="input-group">
+            <label>Διαιρέτης Q(x):</label>
+            <input type="text" id="divisor" value="1, -2, 1" placeholder="π.χ. 1, -1">
+        </div>
+        <div class="input-group" style="justify-content: flex-end; display: flex; align-items: flex-end;">
+            <button class="action-btn btn-reset" onclick="initSystem()">🔄 Επανεκκίνηση</button>
+        </div>
+    </div>
+    <div id="poly-preview" style="text-align: center; color: #64748b; margin-bottom: 15px; font-style: italic;"></div>
+
+    <div class="feedback-box" id="feedbackContainer">
+        <span id="feedbackText">Πατήστε Εκκίνηση...</span>
+        <div class="actions" id="actionButtons"></div>
+    </div>
+
+    <div id="gridContainer" class="division-container"></div>
+
+    <div id="identityDisplay" class="identity-box">
+        <div class="identity-title">Ταυτοτητα της Διαιρεσης</div>
+        <div class="identity-formula" id="identityFormula"></div>
+    </div>
+
+    <div class="credits">
+        Ιδέα + υλοποίηση: Αρης Χατζηγρίβας
+    </div>
+</div>
+
+<script>
+    // --- Global State ---
+    let dividend = [];
+    let divisor = [];
+    let state = {
+        mode: 'demo',
+        step: 0,
+        subStep: 0,
+        userInputs: [],
+        correctValues: [],
+        degree: 0,
+        currentRemainder: [],
+        quotient: []
+    };
+
+    function parseInput(str) {
+        return str.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+    }
+
+    function toSuperscript(n) {
+        const supers = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+        return n.toString().split('').map(d => supers[d]).join('');
+    }
+
+    function formatPoly(coeffs, variable='x') {
+        let str = "";
+        let deg = coeffs.length - 1;
+        let hasTerms = false;
+        
+        coeffs.forEach((c, i) => {
+            if (Math.abs(c) < 0.0001 && deg > 0 && i !== coeffs.length-1) return;
+            if (c === 0 && hasTerms) return;
+
+            let p = deg - i;
+            let sign = c >= 0 ? (str ? " + " : "") : " - ";
+            let val = Math.abs(c);
+            
+            if (str === "" && c < 0) sign = "-";
+            if (str === "" && c >= 0) sign = "";
+            
+            if (val !== 1 || p === 0) sign += val;
+            if (p > 0) sign += variable;
+            if (p > 1) sign += toSuperscript(p);
+            str += sign;
+            hasTerms = true;
+        });
+        if (str === "") return "0";
+        return str;
+    }
+
+    function switchTab(mode) {
+        state.mode = mode;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.tab-btn[onclick="switchTab('${mode}')"]`).classList.add('active');
+        initSystem();
+    }
+
+    function createCell(content, classes = '') {
+        const div = document.createElement('div');
+        div.className = `cell ${classes}`;
+        div.innerHTML = content;
+        return div;
+    }
+
+    function createSeparator() {
+        return createCell('', 'vertical-separator');
+    }
+
+    function initSystem() {
+        document.getElementById('identityDisplay').style.display = 'none';
+        
+        const divStr = document.getElementById('dividend').value;
+        const divrStr = document.getElementById('divisor').value;
+        
+        dividend = parseInput(divStr);
+        divisor = parseInput(divrStr);
+        
+        if(dividend.length === 0 || divisor.length === 0) return;
+
+        document.getElementById('poly-preview').innerHTML = 
+            `P(x) = ${formatPoly(dividend)} &nbsp;&nbsp;|&nbsp;&nbsp; Q(x) = ${formatPoly(divisor)}`;
+
+        const N = dividend.length - 1; 
+        const M = divisor.length - 1;
+        
+        // --- ΝΕΟ: Υπολογισμός βαθμού πηλίκου και συνολικού πλάτους ---
+        const Q_deg = N - M; // Βαθμός πηλίκου
+        const Q_len = Q_deg + 1; // Πλήθος όρων πηλίκου
+        
+        state.degree = N;
+        state.currentRemainder = [...dividend];
+        state.quotient = new Array(Q_len).fill(null);
+        state.step = 0;
+        state.subStep = 0;
+
+        const grid = document.getElementById('gridContainer');
+        grid.innerHTML = '';
+        
+        // Left Cols: Dividend (N+1)
+        const leftCols = N + 1;
+        
+        // Right Cols: Max of Divisor(M+1) OR Quotient(Q_deg+1)
+        // Αυτό εξασφαλίζει ότι χωράνε ΟΛΟΙ οι συντελεστές του πηλίκου
+        const rightCols = Math.max(M + 1, Q_len); 
+
+        grid.style.gridTemplateColumns = `repeat(${leftCols}, var(--cell-width)) var(--separator-width) repeat(${rightCols}, var(--cell-width))`;
+
+        // --- Row 1: Headers ---
+        for(let i=N; i>=0; i--) grid.appendChild(createCell(`x${toSuperscript(i)}`, 'header-cell'));
+        grid.appendChild(createSeparator()); 
+        // Headers for Divisor Side (Usually we show Divisor Powers)
+        // If quotient is wider, we might have empty headers, which is fine
+        for(let k=0; k<rightCols; k++) {
+            // Αν είμαστε εντός εμβέλειας διαιρέτη, βάλε header. Αλλιώς κενό.
+            let power = M - k;
+            if(power >= 0) {
+                grid.appendChild(createCell(`x${toSuperscript(power)}`, 'header-cell'));
+            } else {
+                grid.appendChild(createCell('', 'header-cell'));
+            }
+        }
+
+        // --- Row 2: Dividend & Divisor ---
+        dividend.forEach(c => grid.appendChild(createCell(c, 'term-cell dividend-style')));
+        grid.appendChild(createSeparator()); 
+        
+        // Divisor Terms
+        divisor.forEach(c => grid.appendChild(createCell(c, 'term-cell horizontal-separator')));
+        // Fill remaining space on the right (if Quotient is wider than Divisor)
+        for(let k=0; k < rightCols - divisor.length; k++) {
+             grid.appendChild(createCell('', 'border-bottom'));
+        }
+
+        // --- Row 3: Initial Empty Space (Left) & QUOTIENT ROW (Right) ---
+        for(let i=0; i<=N; i++) {
+            let c = createCell('', ''); 
+            c.id = `row3-left-${i}`;
+            grid.appendChild(c);
+        }
+        grid.appendChild(createSeparator()); 
+        
+        // Quotient Area - Create cells for ALL quotient terms (Q_deg down to 0)
+        // We fill from left to right.
+        for(let k=0; k<rightCols; k++) {
+            // Υπολογισμός σε ποια δύναμη του πηλίκου αντιστοιχεί αυτό το κελί
+            // Το πηλίκο ξεκινάει να γράφεται από τα αριστερά (μεγιστοβάθμιος)
+            // Οπότε το index k=0 αντιστοιχεί στο Q_deg.
+            let qPower = Q_deg - k;
+            
+            let c = createCell('', 'quotient-area term-cell');
+            if (qPower >= 0) {
+                c.id = `q-cell-${qPower}`; // Assign ID for logic targeting
+            }
+            grid.appendChild(c);
+        }
+
+        updateControls();
+    }
+
+    function updateControls() {
+        const btnContainer = document.getElementById('actionButtons');
+        const txt = document.getElementById('feedbackText');
+        btnContainer.innerHTML = '';
+
+        const N = dividend.length - 1;
+        const M = divisor.length - 1;
+        const stepsNeeded = N - M + 1;
+
+        if (state.step >= stepsNeeded) {
+            txt.innerText = "Η διαίρεση ολοκληρώθηκε!";
+            txt.style.color = "green";
+            showIdentity();
+            return;
+        }
+
+        if (state.mode === 'demo') {
+            txt.innerText = getStepDescription();
+            const btn = document.createElement('button');
+            btn.className = 'action-btn btn-next';
+            btn.innerText = 'Επόμενο Βήμα ▶';
+            btn.onclick = executeNextStepDemo;
+            btnContainer.appendChild(btn);
+        } else {
+            txt.innerText = getInteractivePrompt();
+            const btnCheck = document.createElement('button');
+            btnCheck.className = 'action-btn btn-check';
+            btnCheck.innerText = 'Έλεγχος ✔';
+            btnCheck.onclick = checkInteractiveInput;
+            const btnSolve = document.createElement('button');
+            btnSolve.className = 'action-btn btn-solve';
+            btnSolve.innerText = 'Λύση 💡';
+            btnSolve.onclick = showSolution;
+            btnContainer.appendChild(btnCheck);
+            btnContainer.appendChild(btnSolve);
+            
+            if (document.querySelectorAll('.user-input').length === 0) {
+                renderInteractiveInputs();
+            }
+        }
+    }
+
+    function showIdentity() {
+        const idBox = document.getElementById('identityDisplay');
+        const formula = document.getElementById('identityFormula');
+        const qPoly = state.quotient.filter(x => x !== null && x !== undefined);
+        const rPoly = state.currentRemainder; 
+        
+        const P = formatPoly(dividend);
+        const Q = formatPoly(divisor);
+        const Pi = formatPoly(qPoly);
+        const U = formatPoly(rPoly);
+        
+        formula.innerHTML = `${P} = (${Q}) · (${Pi}) + (${U})`;
+        idBox.style.display = 'block';
+    }
+
+    function getStepDescription() {
+        if(state.subStep === 0) return "Βρείτε τον όρο του πηλίκου (Μεγιστοβάθμιος / Μεγιστοβάθμιο).";
+        if(state.subStep === 1) return "Πολλαπλασιάστε το πηλίκο με τον διαιρέτη και αλλάξτε τα πρόσημα.";
+        if(state.subStep === 2) return "Κάντε την πρόσθεση κατά στήλες (το πρώτο μηδενίζεται).";
+        return "";
+    }
+
+    function getInteractivePrompt() {
+        if(state.subStep === 0) return `Βήμα ${state.step+1}: Ποιος είναι ο επόμενος όρος του πηλίκου;`;
+        if(state.subStep === 1) return "Συμπληρώστε τα γινόμενα με ΑΝΤΙΘΕΤΟ πρόσημο στις σωστές στήλες.";
+        if(state.subStep === 2) return "Προσθέστε κάθε στήλη για να βρείτε το νέο υπόλοιπο (αφήστε κενό αυτό που μηδενίζεται).";
+    }
+
+    function getCurrentMath() {
+        const currentLeadIndex = state.step;
+        const leadRem = state.currentRemainder[currentLeadIndex];
+        const leadDiv = divisor[0];
+        const qVal = leadRem / leadDiv;
+        
+        let subRow = new Array(state.currentRemainder.length).fill(null);
+        for(let i=0; i<divisor.length; i++) {
+            subRow[currentLeadIndex + i] = -(qVal * divisor[i]);
+        }
+        let newRem = [...state.currentRemainder];
+        for(let i=0; i<divisor.length; i++) {
+            newRem[currentLeadIndex + i] += subRow[currentLeadIndex + i];
+        }
+        return { qVal, subRow, newRem, currentLeadIndex, leadRem, leadDiv };
+    }
+
+    function executeNextStepDemo() {
+        const grid = document.getElementById('gridContainer');
+        const math = getCurrentMath();
+        const N = dividend.length - 1;
+        const M = divisor.length - 1;
+        
+        // Recalculate right cols just for rendering spacing if needed
+        const Q_len = (N - M) + 1;
+        const rightCols = Math.max(M + 1, Q_len); 
+
+        if (state.subStep === 0) {
+            state.quotient[state.step] = math.qVal;
+            let power = (N - state.step) - M;
+            let cell = document.getElementById(`q-cell-${power}`);
+            if(cell) {
+                cell.innerText = math.qVal;
+                cell.style.backgroundColor = "#dbeafe";
+                setTimeout(() => cell.style.backgroundColor = "transparent", 500);
+            }
+            state.subStep = 1;
+            updateControls();
+
+        } else if (state.subStep === 1) {
+            if (state.step === 0) {
+                 for(let i=0; i<=N; i++) {
+                    let c = document.getElementById(`row3-left-${i}`);
+                    let val = math.subRow[i];
+                    if (val !== null && val !== undefined) {
+                        c.innerText = val;
+                        c.classList.add('sign-change');
+                    }
+                 }
+                 for(let i=0; i<=N; i++) {
+                     if(i >= math.currentLeadIndex) document.getElementById(`row3-left-${i}`).classList.add('border-subtraction');
+                 }
+            } else {
+                for(let i=0; i<math.currentLeadIndex; i++) grid.appendChild(createCell('', ''));
+                for(let i=0; i<divisor.length; i++) {
+                    let val = -(math.qVal * divisor[i]);
+                    grid.appendChild(createCell(val, 'term-cell sign-change'));
+                }
+                let used = math.currentLeadIndex + divisor.length;
+                for(let i=used; i<=N; i++) grid.appendChild(createCell('', ''));
+                
+                grid.appendChild(createSeparator());
+                for(let i=0; i<rightCols; i++) grid.appendChild(createCell('', ''));
+
+                let rowStartIdx = grid.children.length - ( (N+1) + 1 + rightCols );
+                for(let i=0; i<=N; i++) {
+                    if(i >= math.currentLeadIndex)
+                        grid.children[rowStartIdx + i].classList.add('border-subtraction');
+                }
+            }
+            state.subStep = 2;
+            updateControls();
+
+        } else if (state.subStep === 2) {
+            state.currentRemainder = math.newRem;
+            
+            // HIDE ZERO LOGIC (Demo)
+            state.currentRemainder.forEach((c, idx) => {
+                if (idx <= math.currentLeadIndex) {
+                    grid.appendChild(createCell('', '')); 
+                } else {
+                    grid.appendChild(createCell(c, 'term-cell')); 
+                }
+            });
+            
+            grid.appendChild(createSeparator()); 
+            for(let i=0; i<rightCols; i++) grid.appendChild(createCell('', ''));
+
+            state.step++;
+            state.subStep = 0;
+            updateControls();
+        }
+    }
+
+    function renderInteractiveInputs() {
+        const grid = document.getElementById('gridContainer');
+        const N = dividend.length - 1;
+        const M = divisor.length - 1;
+        const math = getCurrentMath();
+        
+        const Q_len = (N - M) + 1;
+        const rightCols = Math.max(M + 1, Q_len); 
+
+        state.userInputs = [];
+        state.correctValues = [];
+
+        if (state.subStep === 0) {
+            let power = (N - state.step) - M;
+            let targetCell = document.getElementById(`q-cell-${power}`);
+            if(targetCell) {
+                targetCell.innerHTML = '';
+                let input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'user-input';
+                targetCell.appendChild(input);
+                state.userInputs.push(input);
+                state.correctValues.push(math.qVal);
+            }
+
+        } else if (state.subStep === 1) {
+            if (state.step === 0) {
+                 for(let i=0; i<divisor.length; i++) {
+                     let idx = math.currentLeadIndex + i;
+                     let cell = document.getElementById(`row3-left-${idx}`);
+                     cell.innerHTML = '';
+                     let input = document.createElement('input');
+                     input.type = 'number';
+                     input.className = 'user-input';
+                     cell.appendChild(input);
+                     state.userInputs.push(input);
+                     state.correctValues.push(-(math.qVal * divisor[i]));
+                 }
+                 for(let i=0; i<=N; i++) {
+                     if(i >= math.currentLeadIndex)
+                        document.getElementById(`row3-left-${i}`).classList.add('border-subtraction');
+                 }
+            } else {
+                for(let i=0; i<math.currentLeadIndex; i++) grid.appendChild(createCell('', ''));
+                for(let i=0; i<divisor.length; i++) {
+                    let div = createCell('', 'term-cell');
+                    let input = document.createElement('input');
+                    input.type = 'number';
+                    input.className = 'user-input';
+                    div.appendChild(input);
+                    grid.appendChild(div);
+                    state.userInputs.push(input);
+                }
+                for(let i=0; i<divisor.length; i++) state.correctValues.push( -(math.qVal * divisor[i]) );
+
+                let used = math.currentLeadIndex + divisor.length;
+                for(let i=used; i<=N; i++) grid.appendChild(createCell('', ''));
+                
+                grid.appendChild(createSeparator());
+                for(let i=0; i<rightCols; i++) grid.appendChild(createCell('', ''));
+
+                let rowStartIdx = grid.children.length - ( (N+1) + 1 + rightCols );
+                for(let i=0; i<=N; i++) {
+                    if(i >= math.currentLeadIndex)
+                        grid.children[rowStartIdx + i].classList.add('border-subtraction');
+                }
+            }
+
+        } else if (state.subStep === 2) {
+            for(let i=0; i<=N; i++) {
+                if (i <= math.currentLeadIndex) {
+                    grid.appendChild(createCell('', 'term-cell')); 
+                } else {
+                    let div = createCell('', 'term-cell');
+                    let input = document.createElement('input');
+                    input.type = 'number';
+                    input.className = 'user-input';
+                    div.appendChild(input);
+                    grid.appendChild(div);
+                    state.userInputs.push(input);
+                    state.correctValues.push(math.newRem[i]);
+                }
+            }
+            grid.appendChild(createSeparator()); 
+            for(let i=0; i<rightCols; i++) grid.appendChild(createCell('', ''));
+        }
+        
+        if(state.userInputs.length > 0) state.userInputs[0].focus();
+    }
+
+    function checkInteractiveInput() {
+        let allCorrect = true;
+        state.userInputs.forEach((input, idx) => {
+            let val = parseFloat(input.value);
+            let correct = state.correctValues[idx];
+            if (!isNaN(val) && Math.abs(val - correct) < 0.001) {
+                input.classList.add('correct');
+                input.classList.remove('wrong');
+                input.disabled = true;
+            } else {
+                input.classList.add('wrong');
+                input.classList.remove('correct');
+                allCorrect = false;
+            }
+        });
+
+        const feedback = document.getElementById('feedbackText');
+        const math = getCurrentMath();
+
+        if (allCorrect) {
+            feedback.innerText = "Σωστά! Προχωράμε...";
+            feedback.style.color = "green";
+            setTimeout(() => {
+                feedback.style.color = "black";
+                state.userInputs.forEach((input, idx) => {
+                   let parent = input.parentElement;
+                   parent.innerText = state.correctValues[idx];
+                   if(state.subStep === 1) parent.classList.add('sign-change');
+                   if(state.subStep === 0) parent.classList.add('quotient-area');
+                });
+
+                if (state.subStep === 2) {
+                    state.currentRemainder = math.newRem; 
+                    state.step++;
+                    state.subStep = 0;
+                } else {
+                    state.subStep++;
+                }
+                updateControls();
+            }, 800);
+        } else {
+            feedback.style.color = "red";
+            if (state.subStep === 0) {
+                feedback.innerHTML = `<strong>Λάθος!</strong> Διαιρέστε: ${math.leadRem} : ${math.leadDiv} = ;`;
+            } else if (state.subStep === 1) {
+                feedback.innerHTML = `<strong>Λάθος!</strong> Πολλαπλασιάζουμε το ${math.qVal} με τον διαιρέτη και γράφουμε τα <strong>ΑΝΤΙΘΕΤΑ</strong> πρόσημα.`;
+            } else if (state.subStep === 2) {
+                feedback.innerHTML = `<strong>Λάθος στην πρόσθεση!</strong> Προσθέστε κάθε στήλη προσεκτικά (π.χ. ${math.leadRem} και ${-(math.qVal * divisor[0])} κάνει 0, άρα το αφήνουμε κενό).`;
+            }
+        }
+    }
+
+    function showSolution() {
+        state.userInputs.forEach((input, idx) => {
+            input.value = state.correctValues[idx];
+            input.classList.remove('wrong');
+        });
+        checkInteractiveInput();
+    }
+
+    window.onload = () => switchTab('demo');
+
+</script>
+
+</body>
+</html>

@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Εκπαιδευτικά Εργαστήρια | Portals Experience</title>
+    <title>Εκπαιδευτικά Εργαστήρια | Interactive Labs</title>
 
     <style>
         :root {
-            /* Προσαρμοσμένα Gradients για τα 2 Εργαστήρια */
-            --grad-math: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            --grad-physics: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+            /* Φωτεινά Gradients για τα 6 Εργαστήρια */
+            --grad-division: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            --grad-tarzan: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);
+            --grad-horner: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            --grad-mean: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            --grad-trig: linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%);
+            --grad-physics: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
             
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -25,26 +29,15 @@
         body {
             margin: 0; 
             min-height: 100vh;
-            background-color: #050505;
-            color: #ffffff;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8f0f7 50%, #f5f1e8 100%);
+            color: #1e293b;
             overflow-x: hidden;
             display: flex;
             align-items: center;
-            /* Animated Mesh Background */
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 30%),
-                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15), transparent 30%);
-            background-attachment: fixed;
-            animation: bgShift 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes bgShift {
-            0% { background-position: 0% 0%; }
-            100% { background-position: 100% 100%; }
         }
 
         .view-container {
-            max-width: 1000px; 
+            max-width: 1200px; 
             margin: 0 auto; 
             padding: 40px 20px;
             width: 100%;
@@ -53,27 +46,27 @@
         /* --- HEADER --- */
         header { 
             text-align: center; 
-            margin-bottom: 50px; 
+            margin-bottom: 60px; 
         }
         h1 { 
             font-size: clamp(2.5rem, 5vw, 4rem); 
             font-weight: 900; 
             letter-spacing: -2px; 
             margin-bottom: 10px; 
-            background: linear-gradient(to right, #fff, #a1a1aa); 
+            background: linear-gradient(to right, #0f172a, #475569); 
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent; 
         }
         .subtitle { 
             font-size: clamp(1rem, 2vw, 1.2rem); 
-            color: #a1a1aa; 
+            color: #64748b; 
             font-weight: 300; 
         }
 
         /* --- BENTO GRID --- */
         .bento-grid {
             display: grid;
-            grid-template-columns: repeat(12, 1fr); 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 30px;
         }
 
@@ -85,62 +78,61 @@
             justify-content: space-between;
             position: relative; 
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-decoration: none; 
             color: white;
             min-height: 300px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-
-        /* Μεγέθη & Χρώματα Καρτών (Οι 2 εφαρμογές πιάνουν από 6 στήλες) */
-        .portal-card[data-cat="math"] { 
-            grid-column: span 6; 
-            background: var(--grad-math); 
-        } 
-        .portal-card[data-cat="physics"] { 
-            grid-column: span 6; 
-            background: var(--grad-physics); 
-        }   
 
         /* Εφέ Γυαλιού & Σκιές */
         .portal-card::before {
             content: ''; 
             position: absolute; 
             inset: 0;
-            background: linear-gradient(to bottom right, rgba(255,255,255,0.2), rgba(255,255,255,0));
+            background: linear-gradient(to bottom right, rgba(255,255,255,0.3), rgba(255,255,255,0));
             z-index: 1; 
             pointer-events: none; 
             border-radius: 24px;
         }
         
         .portal-card:hover { 
-            transform: translateY(-8px) scale(1.02); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+            transform: translateY(-12px) scale(1.04); 
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2); 
         }
         .portal-card:hover .portal-icon { 
-            transform: scale(1.2) rotate(5deg); 
+            transform: scale(1.25) rotate(8deg); 
         }
+
+        /* Χρώματα κάθε κάρτας */
+        .portal-card[data-cat="division"] { background: var(--grad-division); }
+        .portal-card[data-cat="tarzan"] { background: var(--grad-tarzan); }
+        .portal-card[data-cat="horner"] { background: var(--grad-horner); }
+        .portal-card[data-cat="mean"] { background: var(--grad-mean); }
+        .portal-card[data-cat="trig"] { background: var(--grad-trig); }
+        .portal-card[data-cat="physics"] { background: var(--grad-physics); }
 
         .portal-icon { 
             font-size: 5rem; 
             z-index: 2; 
             transition: 0.4s; 
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); 
             margin-bottom: 20px;
         }
         .portal-info { z-index: 2; }
         
         /* Τυπογραφία Καρτών */
         .portal-title { 
-            font-size: clamp(1.5rem, 2vw, 2.2rem); 
+            font-size: clamp(1.3rem, 2vw, 1.8rem); 
             font-weight: 800; 
             margin-bottom: 12px; 
             line-height: 1.2; 
             word-break: break-word;
         }
         .portal-desc { 
-            font-size: 1.05rem; 
-            opacity: 0.9; 
+            font-size: 0.95rem; 
+            opacity: 0.95; 
             font-weight: 400; 
             line-height: 1.5; 
         }
@@ -148,19 +140,21 @@
         /* Footer */
         footer { 
             text-align: center; 
-            margin-top: 60px;
-            color: #71717a; 
+            margin-top: 80px;
+            color: #94a3b8; 
             font-size: 0.9rem; 
         }
 
         /* Responsive */
-        @media (max-width: 900px) {
+        @media (max-width: 768px) {
             .bento-grid { 
                 grid-template-columns: 1fr; 
             }
-            .portal-card[data-cat] { 
-                grid-column: span 1; 
-                min-height: 250px;
+            .portal-card { 
+                min-height: 280px;
+            }
+            header {
+                margin-bottom: 40px;
             }
         }
     </style>
@@ -169,32 +163,64 @@
 
     <div class="view-container">
         <header>
-            <h1>Διαδραστικά Εργαστήρια</h1>
+            <h1>🧮 Διαδραστικά Εργαστήρια</h1>
             <p class="subtitle">Εξερεύνησε τις προσομοιώσεις Μαθηματικών και Φυσικής</p>
         </header>
 
         <div class="bento-grid">
             
-            <a href="division.html" class="portal-card" data-cat="math" target="_blank">
+            <a href="division.html" class="portal-card" data-cat="division" target="_blank">
                 <div class="portal-icon">➗</div>
                 <div class="portal-info">
                     <div class="portal-title">Διαίρεση Πολυωνύμων</div>
-                    <div class="portal-desc">Ένα πλήρες διαδραστικό εργαστήριο για την κατανόηση της διαίρεσης, την εύρεση του πηλίκου & υπολοίπου και την ταυτότητα της διαίρεσης.</div>
+                    <div class="portal-desc">Πλήρες διαδραστικό εργαστήριο για την κατανόηση της διαίρεσης, την εύρεση του πηλίκου & υπολοίπου.</div>
                 </div>
             </a>
             
-            <a href="tarzan.html" class="portal-card" data-cat="physics" target="_blank">
+            <a href="tarzan.html" class="portal-card" data-cat="tarzan" target="_blank">
                 <div class="portal-icon">🌴</div>
                 <div class="portal-info">
                     <div class="portal-title">Η Φυσική του Ταρζάν</div>
-                    <div class="portal-desc">Προσομοίωση της δυναμικής της κυκλικής κίνησης. Μελέτησε την κεντρομόλο δύναμη, το βάρος, την ταχύτητα και την τάση του νήματος!</div>
+                    <div class="portal-desc">Προσομοίωση της δυναμικής της κυκλικής κίνησης. Μελέτησε την κεντρομόλο δύναμη και την τάση του νήματος!</div>
+                </div>
+            </a>
+
+            <a href="systima_horner_math_g_lykeiou.html" class="portal-card" data-cat="horner" target="_blank">
+                <div class="portal-icon">📊</div>
+                <div class="portal-info">
+                    <div class="portal-title">Σχήμα Horner</div>
+                    <div class="portal-desc">Μάθε το κλασικό σχήμα Horner για την αποτελεσματική αποτίμηση πολυωνύμων.</div>
+                </div>
+            </a>
+
+            <a href="theorima_mesis_timis_g_lykeiou.html" class="portal-card" data-cat="mean" target="_blank">
+                <div class="portal-icon">📈</div>
+                <div class="portal-info">
+                    <div class="portal-title">Θεώρημα Μέσης Τιμής</div>
+                    <div class="portal-desc">Διαδραστική εξερεύνηση του θεωρήματος μέσης τιμής και των εφαρμογών του.</div>
+                </div>
+            </a>
+
+            <a href="trigonometrikos_kyklos_math_b_lykeiou.html" class="portal-card" data-cat="trig" target="_blank">
+                <div class="portal-icon">⭕</div>
+                <div class="portal-info">
+                    <div class="portal-title">Τριγωνομετρικός Κύκλος</div>
+                    <div class="portal-desc">Κατανόησε τις τριγωνομετρικές συναρτήσεις με τον μοναδιαίο κύκλο.</div>
+                </div>
+            </a>
+
+            <a href="physics-programming.html" class="portal-card" data-cat="physics" target="_blank">
+                <div class="portal-icon">⚛️</div>
+                <div class="portal-info">
+                    <div class="portal-title">Physics Programming</div>
+                    <div class="portal-desc">Συνδύασε τον προγραμματισμό με τη φυσική σε αυτή την δυναμική εφαρμογή.</div>
                 </div>
             </a>
             
         </div>
 
         <footer>
-            &copy; 2026 Διαδραστικά Εκπαιδευτικά Αντικείμενα
+            &copy; 2026 Διαδραστικά Εκπαιδευτικά Εργαστήρια | Τεχνολογία Διδακτικής
         </footer>
     </div>
 

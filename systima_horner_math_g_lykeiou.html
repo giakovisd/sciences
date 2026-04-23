@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Σχήμα Horner | Μαθηματικά Γ΄ Λυκείου</title>
+  <style>
+    :root{
+      --bg:#eef5ff; --card:#ffffff; --ink:#172033; --muted:#64748b;
+      --blue:#2563eb; --orange:#f97316; --green:#16a34a; --red:#dc2626;
+      --purple:#7c3aed; --line:#d7e1f2; --soft:#e0ecff;
+      --shadow:0 18px 50px rgba(25,55,100,.15); --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink); min-height:100vh;
+      background:radial-gradient(circle at top left,#dbeafe 0,transparent 35%),radial-gradient(circle at bottom right,#ffe7d2 0,transparent 30%),var(--bg);
+    }
+    header{max-width:1180px;margin:0 auto;padding:28px 18px 12px;text-align:center}
+    h1{margin:0 0 8px;font-size:clamp(1.7rem,3vw,2.7rem);letter-spacing:-.03em}
+    header p{max-width:860px;margin:0 auto;color:var(--muted);font-size:1.05rem;line-height:1.55}
+    .app{max-width:1180px;margin:18px auto 34px;padding:0 18px;display:grid;grid-template-columns:minmax(360px,1.1fr) minmax(330px,.9fr);gap:18px}
+    .card{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;background:var(--soft);color:#1d4ed8;padding:8px 12px;font-weight:800;font-size:.92rem}
+    button,select,input{border:0;border-radius:14px;padding:10px 13px;font-weight:800;color:var(--ink);background:#f1f5f9}
+    button,select{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}
+    button:hover,select:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(15,23,42,.08)}
+    input{border:1px solid var(--line);background:#fff;width:100%}
+    .primary{background:#dbeafe;color:#1d4ed8}.success{background:#dcfce7;color:#166534}.danger{background:#fee2e2;color:#b91c1c}.dark{background:#111827;color:white}.warn{background:#ffedd5;color:#c2410c}
+    .input-grid{display:grid;grid-template-columns:1.2fr .45fr;gap:10px;margin-bottom:12px}
+    .hint{font-size:.92rem;color:var(--muted);line-height:1.45;margin:6px 0 14px}
+    .poly-box{background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px;line-height:1.55}
+    .poly-box strong{color:var(--blue);font-size:1.12rem}
+    .table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:10px}
+    table{border-collapse:collapse;width:100%;min-width:620px;text-align:center}
+    th,td{border:1px solid #dbe3ef;padding:12px;min-width:76px;font-weight:800}
+    th{background:#eff6ff;color:#1d4ed8}
+    td.label{background:#f8fafc;color:#475569;text-align:left;min-width:150px}
+    .active{outline:4px solid rgba(37,99,235,.25);background:#fff7ed!important;color:#c2410c!important}
+    .done{background:#dcfce7!important;color:#166534!important}
+    .result{margin-top:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .info{background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:14px;min-height:92px}
+    .info small{display:block;color:var(--muted);margin-bottom:6px;font-weight:800}.info strong{font-size:1.2rem}.green strong{color:var(--green)}.orange strong{color:var(--orange)}.purple strong{color:var(--purple)}.blue strong{color:var(--blue)}
+    .explain{margin-top:14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:14px;line-height:1.55}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.tab.active-tab{background:#111827;color:white}
+    .lesson{line-height:1.58;color:#334155;background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:15px}.lesson h3{margin:0 0 8px;color:var(--ink)}
+    .quiz{margin-top:14px;background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:15px}.quiz h3{margin:0 0 10px}
+    .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}.choice{text-align:left;background:white;border:1px solid var(--line)}
+    .feedback{margin-top:10px;min-height:28px;font-weight:900}.footer{max-width:1180px;margin:0 auto 28px;padding:0 18px;color:var(--muted);text-align:center;font-size:.92rem}
+    @media(max-width:930px){.app{grid-template-columns:1fr}.input-grid,.result{grid-template-columns:1fr}}
+    @media(max-width:560px){.choices{grid-template-columns:1fr}.toolbar{align-items:stretch}.toolbar>*{width:100%}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Το Σχήμα Horner</h1>
+  <p>Ένα διαδραστικό μαθησιακό αντικείμενο για την τιμή πολυωνύμου, τη διαίρεση με x−ρ και το υπόλοιπο. Παρακολούθησε πώς κάθε νέος αριθμός προκύπτει από τον προηγούμενο με έναν πολλαπλασιασμό και μία πρόσθεση.</p>
+</header>
+
+<main class="app">
+  <section class="card">
+    <div class="toolbar">
+      <span class="badge">● Βήμα προς βήμα</span>
+      <div>
+        <button class="primary" id="stepBtn">Επόμενο βήμα</button>
+        <button class="success" id="autoBtn">Αυτόματα</button>
+        <button class="danger" id="resetBtn">↺ Reset</button>
+      </div>
+    </div>
+
+    <div class="input-grid">
+      <div>
+        <label><b>Συντελεστές πολυωνύμου</b></label>
+        <input id="coeffInput" value="2, -3, 0, 5, -4" />
+      </div>
+      <div>
+        <label><b>ρ</b></label>
+        <input id="rhoInput" type="number" value="2" step="0.5" />
+      </div>
+    </div>
+    <div class="hint">Γράψε τους συντελεστές από τον μεγαλύτερο βαθμό προς τον σταθερό όρο. Παράδειγμα: <b>2, -3, 0, 5, -4</b> σημαίνει 2x⁴ − 3x³ + 0x² + 5x − 4.</div>
+
+    <div class="toolbar">
+      <button class="dark" id="buildBtn">Δημιουργία πίνακα</button>
+      <button class="warn" id="exampleBtn">Άλλο παράδειγμα</button>
+    </div>
+
+    <div class="poly-box">
+      Πολυώνυμο: <strong id="polyText"></strong><br>
+      Διαιρέτης: <strong id="divisorText"></strong>
+    </div>
+
+    <div class="table-wrap">
+      <table id="hornerTable"></table>
+    </div>
+
+    <div class="result">
+      <div class="info green"><small>Πηλίκο</small><strong id="quotientText">—</strong></div>
+      <div class="info orange"><small>Υπόλοιπο / P(ρ)</small><strong id="remainderText">—</strong></div>
+    </div>
+
+    <div class="explain" id="stepExplain">Πάτησε «Επόμενο βήμα» για να ξεκινήσει η διαδικασία.</div>
+  </section>
+
+  <section class="card">
+    <div class="tabs">
+      <button class="tab active-tab" data-tab="idea">Ιδέα</button>
+      <button class="tab" data-tab="division">Διαίρεση</button>
+      <button class="tab" data-tab="root">Ρίζα</button>
+    </div>
+    <div class="lesson" id="lesson"></div>
+
+    <div class="info-grid" style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px">
+      <div class="info blue"><small>Βασικός κανόνας</small><strong>κατεβάζω → πολλαπλασιάζω → προσθέτω</strong></div>
+      <div class="info purple"><small>Σημαντική παρατήρηση</small><strong>Το τελευταίο αποτέλεσμα είναι το υπόλοιπο.</strong></div>
+    </div>
+
+    <div class="quiz">
+      <h3>Μικρή πρόκληση</h3>
+      <div id="questionText"></div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="success" id="newQuestionBtn">Νέα ερώτηση</button>
+    </div>
+  </section>
+</main>
+
+<div class="footer">Μαθησιακό αντικείμενο HTML/JS — Σχήμα Horner για Μαθηματικά Λυκείου.</div>
+
+<script>
+const coeffInput=document.getElementById('coeffInput'),rhoInput=document.getElementById('rhoInput');
+const polyText=document.getElementById('polyText'),divisorText=document.getElementById('divisorText'),table=document.getElementById('hornerTable');
+const quotientText=document.getElementById('quotientText'),remainderText=document.getElementById('remainderText'),stepExplain=document.getElementById('stepExplain');
+const buildBtn=document.getElementById('buildBtn'),stepBtn=document.getElementById('stepBtn'),autoBtn=document.getElementById('autoBtn'),resetBtn=document.getElementById('resetBtn'),exampleBtn=document.getElementById('exampleBtn');
+const lesson=document.getElementById('lesson'),questionText=document.getElementById('questionText'),choices=document.getElementById('choices'),feedback=document.getElementById('feedback'),newQuestionBtn=document.getElementById('newQuestionBtn');
+let coeffs=[],rho=0,b=[],products=[],step=0,timer=null,auto=false,currentQuestion=null;
+
+const examples=[
+  {c:'2, -3, 0, 5, -4',r:2},
+  {c:'1, -6, 11, -6',r:1},
+  {c:'3, 0, -12, 9',r:2},
+  {c:'1, 2, -5, -6',r:-1},
+  {c:'-2, 4, 1, -3, 6',r:3}
+];
+const lessons={
+  idea:`<h3>Η ιδέα του Horner</h3><p>Το σχήμα Horner είναι ένας γρήγορος τρόπος για να υπολογίζουμε την τιμή ενός πολυωνύμου P(x) για x=ρ.</p><p>Αντί να υπολογίζουμε δυνάμεις, δουλεύουμε μόνο με πολλαπλασιασμούς και προσθέσεις.</p>`,
+  division:`<h3>Σύνδεση με διαίρεση πολυωνύμων</h3><p>Όταν διαιρούμε το P(x) με το x−ρ, το σχήμα Horner δίνει απευθείας τους συντελεστές του πηλίκου.</p><p>Το τελευταίο αποτέλεσμα που προκύπτει είναι το υπόλοιπο της διαίρεσης.</p>`,
+  root:`<h3>Πότε το ρ είναι ρίζα;</h3><p>Αν το υπόλοιπο είναι 0, τότε P(ρ)=0. Άρα το ρ είναι ρίζα του πολυωνύμου και το x−ρ είναι παράγοντας του P(x).</p>`
+};
+
+function parseCoeffs(){
+  return coeffInput.value.split(',').map(x=>Number(x.trim())).filter(x=>!Number.isNaN(x));
+}
+function sup(n){return String(n).split('').map(ch=>({'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'}[ch]||ch)).join('')}
+function polyToText(c){
+  const deg=c.length-1; let parts=[];
+  c.forEach((a,i)=>{if(a===0)return; const p=deg-i; let sign=a<0?' − ':' + '; let abs=Math.abs(a); let term='';
+    if(p===0) term=String(abs); else if(p===1) term=(abs===1?'':' '+abs)+'x'; else term=(abs===1?'':' '+abs)+'x'+sup(p);
+    parts.push({sign,term});
+  });
+  if(parts.length===0)return '0';
+  let first=parts[0]; let txt=(first.sign.includes('−')?'− ':'')+first.term.trim();
+  for(let i=1;i<parts.length;i++) txt+=parts[i].sign+parts[i].term.trim();
+  return txt;
+}
+function quotientToText(){
+  if(b.length<2)return '—';
+  return polyToText(b.slice(0,-1));
+}
+function buildData(){
+  coeffs=parseCoeffs(); rho=Number(rhoInput.value);
+  if(coeffs.length<2){coeffs=[2,-3,0,5,-4];coeffInput.value=coeffs.join(', ')}
+  b=[]; products=[];
+  for(let i=0;i<coeffs.length;i++){
+    if(i===0){b[i]=coeffs[i];products[i]=''}
+    else{products[i]=b[i-1]*rho;b[i]=coeffs[i]+products[i]}
+  }
+}
+function drawTable(){
+  const n=coeffs.length; table.innerHTML='';
+  const row1=document.createElement('tr'); row1.innerHTML='<td class="label">Συντελεστές P(x)</td>'+coeffs.map((v,i)=>`<td id="c${i}">${v}</td>`).join(''); table.appendChild(row1);
+  const row2=document.createElement('tr'); row2.innerHTML=`<td class="label">Πολλαπλασιασμός με ρ=${rho}</td>`+coeffs.map((_,i)=>`<td id="p${i}">${i===0?'—':''}</td>`).join(''); table.appendChild(row2);
+  const row3=document.createElement('tr'); row3.innerHTML='<td class="label">Νέα γραμμή</td>'+coeffs.map((_,i)=>`<td id="b${i}"></td>`).join(''); table.appendChild(row3);
+  updateVisibleCells();
+}
+function updateVisibleCells(){
+  for(let i=0;i<coeffs.length;i++){
+    const p=document.getElementById('p'+i),bb=document.getElementById('b'+i),cc=document.getElementById('c'+i);
+    if(p){p.textContent=i===0?'—':(i<step?products[i]:'');p.className=i<step&&i>0?'done':''}
+    if(bb){bb.textContent=i<step?b[i]:'';bb.className=i<step?'done':''}
+    if(cc){cc.className=i===step?'active':''}
+  }
+  for(let i=0;i<coeffs.length;i++){
+    const p=document.getElementById('p'+i),bb=document.getElementById('b'+i);
+    if(i===step && p) p.classList.add('active');
+    if(i===step && bb) bb.classList.add('active');
+  }
+  if(step>=coeffs.length){quotientText.textContent=quotientToText();remainderText.textContent=b[b.length-1];}
+  else{quotientText.textContent='—';remainderText.textContent='—';}
+}
+function reset(){clearInterval(timer);auto=false;autoBtn.textContent='Αυτόματα';buildData();step=0;polyText.textContent=polyToText(coeffs);divisorText.textContent=`x ${rho<0?'+ '+Math.abs(rho):'− '+rho}`;drawTable();stepExplain.innerHTML='Πάτησε «Επόμενο βήμα» για να ξεκινήσει η διαδικασία.'}
+function nextStep(){
+  if(step>=coeffs.length){stepExplain.innerHTML=`Η διαδικασία ολοκληρώθηκε. Το πηλίκο είναι <b>${quotientToText()}</b> και το υπόλοιπο είναι <b>${b[b.length-1]}</b>.`;return}
+  if(step===0){stepExplain.innerHTML=`1ο βήμα: Κατεβάζουμε τον πρώτο συντελεστή, δηλαδή το <b>${b[0]}</b>.`}
+  else{stepExplain.innerHTML=`Βήμα ${step+1}: Πολλαπλασιάζουμε το προηγούμενο αποτέλεσμα <b>${b[step-1]}</b> με <b>ρ=${rho}</b>: παίρνουμε <b>${products[step]}</b>. Μετά προσθέτουμε τον συντελεστή <b>${coeffs[step]}</b>, άρα προκύπτει <b>${b[step]}</b>.`}
+  step++; updateVisibleCells();
+  if(step>=coeffs.length){
+    const rem=b[b.length-1];
+    stepExplain.innerHTML+= rem===0?`<br><br>Επειδή το υπόλοιπο είναι <b>0</b>, το <b>${rho}</b> είναι ρίζα του πολυωνύμου.`:`<br><br>Το τελευταίο αποτέλεσμα είναι το υπόλοιπο: <b>${rem}</b>. Άρα P(${rho}) = ${rem}.`;
+  }
+}
+function autoRun(){
+  auto=!auto; autoBtn.textContent=auto?'Παύση':'Αυτόματα';
+  if(auto){timer=setInterval(()=>{if(step>=coeffs.length){clearInterval(timer);auto=false;autoBtn.textContent='Αυτόματα'}else nextStep()},900)}
+  else clearInterval(timer);
+}
+function randomExample(){const ex=examples[Math.floor(Math.random()*examples.length)];coeffInput.value=ex.c;rhoInput.value=ex.r;reset()}
+
+buildBtn.onclick=reset;resetBtn.onclick=reset;stepBtn.onclick=nextStep;autoBtn.onclick=autoRun;exampleBtn.onclick=randomExample;
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active-tab'));t.classList.add('active-tab');lesson.innerHTML=lessons[t.dataset.tab]}));
+
+const quizBank=[
+  {q:'Ποιο είναι το πρώτο βήμα στο σχήμα Horner;',choices:['Προσθέτουμε όλους τους συντελεστές','Κατεβάζουμε τον πρώτο συντελεστή','Υψώνουμε το ρ σε δυνάμεις','Διαιρούμε με το υπόλοιπο'],answer:'Κατεβάζουμε τον πρώτο συντελεστή',why:'Η διαδικασία αρχίζει πάντα με τον πρώτο συντελεστή.'},
+  {q:'Τι δείχνει το τελευταίο αποτέλεσμα της γραμμής Horner;',choices:['Το βαθμό του πολυωνύμου','Το υπόλοιπο','Τον πρώτο συντελεστή','Τη διακρίνουσα'],answer:'Το υπόλοιπο',why:'Το τελευταίο αποτέλεσμα είναι ίσο με P(ρ), δηλαδή το υπόλοιπο της διαίρεσης με x−ρ.'},
+  {q:'Αν το υπόλοιπο είναι 0, τότε:',choices:['Το ρ είναι ρίζα','Το πολυώνυμο είναι μηδενικό','Ο βαθμός αυξάνεται','Δεν υπάρχει πηλίκο'],answer:'Το ρ είναι ρίζα',why:'Αν P(ρ)=0, τότε το ρ είναι ρίζα και το x−ρ παράγοντας.'},
+  {q:'Με ποιον διαιρέτη συνδέεται το Horner για την τιμή ρ;',choices:['x+ρ','x−ρ','ρ−x²','x²−ρ'],answer:'x−ρ',why:'Το σχήμα Horner δίνει το πηλίκο και το υπόλοιπο της διαίρεσης P(x):(x−ρ).'},
+  {q:'Ποια πράξη επαναλαμβάνεται σε κάθε στήλη μετά την πρώτη;',choices:['Πολλαπλασιασμός με ρ και πρόσθεση','Διαίρεση με ρ και αφαίρεση','Ύψωση σε δύναμη','Τετραγωνική ρίζα'],answer:'Πολλαπλασιασμός με ρ και πρόσθεση',why:'Αυτός είναι ο βασικός μηχανισμός του σχήματος.'}
+];
+function newQuestion(){feedback.textContent='';currentQuestion=quizBank[Math.floor(Math.random()*quizBank.length)];questionText.textContent=currentQuestion.q;choices.innerHTML='';currentQuestion.choices.forEach(c=>{const btn=document.createElement('button');btn.className='choice';btn.textContent=c;btn.onclick=()=>checkAnswer(c);choices.appendChild(btn)})}
+function checkAnswer(c){if(c===currentQuestion.answer){feedback.style.color='#15803d';feedback.textContent='Σωστά. '+currentQuestion.why}else{feedback.style.color='#b91c1c';feedback.textContent='Όχι ακριβώς. '+currentQuestion.why}}
+newQuestionBtn.onclick=newQuestion;
+lesson.innerHTML=lessons.idea;reset();newQuestion();
+</script>
+</body>
+</html>

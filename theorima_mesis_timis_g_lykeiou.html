@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Θεώρημα Μέσης Τιμής | Γ΄ Λυκείου</title>
+  <style>
+    :root{
+      --bg:#eef5ff; --card:#ffffff; --ink:#172033; --muted:#64748b;
+      --blue:#2563eb; --orange:#f97316; --green:#16a34a; --red:#dc2626;
+      --purple:#7c3aed; --line:#d7e1f2; --soft:#e0ecff;
+      --shadow:0 18px 50px rgba(25,55,100,.15); --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink); min-height:100vh;
+      background:radial-gradient(circle at top left,#dbeafe 0,transparent 35%),radial-gradient(circle at bottom right,#ffe7d2 0,transparent 30%),var(--bg);
+    }
+    header{max-width:1180px;margin:0 auto;padding:28px 18px 12px;text-align:center}
+    h1{margin:0 0 8px;font-size:clamp(1.7rem,3vw,2.7rem);letter-spacing:-.03em}
+    header p{max-width:850px;margin:0 auto;color:var(--muted);font-size:1.05rem;line-height:1.55}
+    .app{max-width:1180px;margin:18px auto 34px;padding:0 18px;display:grid;grid-template-columns:minmax(350px,1.12fr) minmax(330px,.88fr);gap:18px}
+    .card{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;background:var(--soft);color:#1d4ed8;padding:8px 12px;font-weight:800;font-size:.92rem}
+    button,select,input[type="number"]{border:0;border-radius:14px;padding:10px 13px;font-weight:800;color:var(--ink);background:#f1f5f9}
+    button,select{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}
+    button:hover,select:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(15,23,42,.08)}
+    .primary{background:#dbeafe;color:#1d4ed8}.success{background:#dcfce7;color:#166534}.danger{background:#fee2e2;color:#b91c1c}.dark{background:#111827;color:white}
+    .canvas-wrap{width:100%;aspect-ratio:1.22/1;min-height:420px;display:grid;place-items:center;background:linear-gradient(180deg,#f8fbff,#fff);border-radius:18px;border:1px solid var(--line);overflow:hidden}
+    canvas{width:100%;height:100%;display:block}
+    .controls{margin-top:14px;display:grid;gap:12px}
+    .row{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center}
+    input[type="range"]{width:100%;accent-color:var(--blue)}
+    .value{min-width:86px;text-align:center;background:#eff6ff;color:#1d4ed8;padding:10px 12px;border-radius:14px;font-weight:900}
+    .info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .info{background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:14px;min-height:92px}
+    .info small{display:block;color:var(--muted);margin-bottom:6px;font-weight:800}.info strong{font-size:1.25rem}
+    .blue strong{color:var(--blue)}.orange strong{color:var(--orange)}.green strong{color:var(--green)}.purple strong{color:var(--purple)}
+    .explain{margin-top:14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:14px;line-height:1.55}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}.tab.active{background:#111827;color:white}
+    .lesson{line-height:1.58;color:#334155;background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:15px}.lesson h3{margin:0 0 8px;color:var(--ink)}
+    .quiz{margin-top:14px;background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:15px}.quiz h3{margin:0 0 10px}
+    .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}.choice{text-align:left;background:white;border:1px solid var(--line)}
+    .feedback{margin-top:10px;min-height:28px;font-weight:900}
+    .note{font-size:.92rem;color:var(--muted);line-height:1.45;margin-top:8px}
+    .footer{max-width:1180px;margin:0 auto 28px;padding:0 18px;color:var(--muted);text-align:center;font-size:.92rem}
+    @media(max-width:930px){.app{grid-template-columns:1fr}.canvas-wrap{min-height:340px}}
+    @media(max-width:560px){.info-grid,.choices{grid-template-columns:1fr}.row{grid-template-columns:1fr}.value{width:100%}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Θεώρημα Μέσης Τιμής</h1>
+  <p>Μετακίνησε το σημείο ξ και παρατήρησε πότε η εφαπτομένη της γραφικής παράστασης γίνεται παράλληλη με τη χορδή που ενώνει τα άκρα του διαστήματος [α, β].</p>
+</header>
+
+<main class="app">
+  <section class="card">
+    <div class="toolbar">
+      <span class="badge">● Οπτική διερεύνηση</span>
+      <div>
+        <select id="functionSelect">
+          <option value="quad">f(x)=x²-2x+1</option>
+          <option value="cubic">f(x)=x³-3x</option>
+          <option value="sin">f(x)=ημx</option>
+          <option value="ln">f(x)=ln(x+3)</option>
+        </select>
+        <button class="primary" id="findBtn">Βρες ξ</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap"><canvas id="graph" width="850" height="700"></canvas></div>
+
+    <div class="controls">
+      <div class="row"><b>α</b><input id="aSlider" type="range" min="-2" max="2" value="-1" step="0.1"><span class="value" id="aVal">-1.0</span></div>
+      <div class="row"><b>β</b><input id="bSlider" type="range" min="0" max="4" value="3" step="0.1"><span class="value" id="bVal">3.0</span></div>
+      <div class="row"><b>ξ</b><input id="xSlider" type="range" min="-1" max="3" value="1" step="0.01"><span class="value" id="xVal">1.00</span></div>
+    </div>
+    <div class="note">Η εφαρμογή κρατά το ξ μέσα στο ανοικτό διάστημα (α, β). Για τη συνάρτηση ln(x+3), το α πρέπει να είναι μεγαλύτερο από -3.</div>
+  </section>
+
+  <section class="card">
+    <div class="info-grid">
+      <div class="info blue"><small>Κλίση χορδής ΑΒ</small><strong id="secantVal">0.000</strong></div>
+      <div class="info orange"><small>Παράγωγος f′(ξ)</small><strong id="derVal">0.000</strong></div>
+      <div class="info green"><small>Διαφορά</small><strong id="diffVal">0.000</strong></div>
+      <div class="info purple"><small>Συμπέρασμα</small><strong id="statusVal">ψάχνουμε...</strong></div>
+    </div>
+
+    <div class="explain" id="explainBox"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="idea">Ιδέα</button>
+      <button class="tab" data-tab="conditions">Προϋποθέσεις</button>
+      <button class="tab" data-tab="meaning">Γεωμετρική σημασία</button>
+    </div>
+    <div class="lesson" id="lesson"></div>
+
+    <div class="quiz">
+      <h3>Μικρή πρόκληση</h3>
+      <div id="questionText"></div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="success" id="newQuestionBtn">Νέα ερώτηση</button>
+    </div>
+  </section>
+</main>
+
+<div class="footer">Μαθησιακό αντικείμενο HTML/JS για Μαθηματικά Γ΄ Λυκείου — Θεώρημα Μέσης Τιμής.</div>
+
+<script>
+const canvas=document.getElementById('graph'),ctx=canvas.getContext('2d');
+const functionSelect=document.getElementById('functionSelect');
+const aSlider=document.getElementById('aSlider'),bSlider=document.getElementById('bSlider'),xSlider=document.getElementById('xSlider');
+const aVal=document.getElementById('aVal'),bVal=document.getElementById('bVal'),xVal=document.getElementById('xVal');
+const secantVal=document.getElementById('secantVal'),derVal=document.getElementById('derVal'),diffVal=document.getElementById('diffVal'),statusVal=document.getElementById('statusVal');
+const explainBox=document.getElementById('explainBox'),lesson=document.getElementById('lesson');
+const findBtn=document.getElementById('findBtn'),questionText=document.getElementById('questionText'),choices=document.getElementById('choices'),feedback=document.getElementById('feedback'),newQuestionBtn=document.getElementById('newQuestionBtn');
+let activeTab='idea',currentQuestion=null;
+
+const funcs={
+  quad:{name:'f(x)=x²-2x+1',f:x=>x*x-2*x+1,df:x=>2*x-2,range:[-2,4]},
+  cubic:{name:'f(x)=x³-3x',f:x=>x*x*x-3*x,df:x=>3*x*x-3,range:[-2,3]},
+  sin:{name:'f(x)=ημx',f:x=>Math.sin(x),df:x=>Math.cos(x),range:[-Math.PI,Math.PI]},
+  ln:{name:'f(x)=ln(x+3)',f:x=>Math.log(x+3),df:x=>1/(x+3),range:[-2.5,4]}
+};
+const lessons={
+  idea:`<h3>Η κεντρική ιδέα</h3><p>Αν μια συνάρτηση είναι συνεχής στο [α,β] και παραγωγίσιμη στο (α,β), τότε υπάρχει τουλάχιστον ένα ξ στο (α,β) ώστε:</p><p style="font-size:1.15rem"><b>f′(ξ) = [f(β)-f(α)] / (β-α)</b></p>`,
+  conditions:`<h3>Οι δύο βασικές προϋποθέσεις</h3><p>1. Η f πρέπει να είναι <b>συνεχής</b> στο κλειστό διάστημα [α,β].</p><p>2. Η f πρέπει να είναι <b>παραγωγίσιμη</b> στο ανοικτό διάστημα (α,β).</p><p>Αν λείπει κάποια προϋπόθεση, το συμπέρασμα δεν είναι εγγυημένο.</p>`,
+  meaning:`<h3>Γεωμετρική σημασία</h3><p>Η κλίση της χορδής ΑΒ είναι ο μέσος ρυθμός μεταβολής στο διάστημα [α,β].</p><p>Το Θεώρημα Μέσης Τιμής λέει ότι κάπου μέσα στο διάστημα υπάρχει εφαπτομένη με την ίδια κλίση. Δηλαδή η εφαπτομένη είναι παράλληλη στη χορδή.</p>`
+};
+
+function f(x){return funcs[functionSelect.value].f(x)}
+function df(x){return funcs[functionSelect.value].df(x)}
+function fmt(n){return Math.abs(n)<1e-7?'0.000':n.toFixed(3)}
+function getA(){return Number(aSlider.value)} function getB(){return Number(bSlider.value)} function getXi(){return Number(xSlider.value)}
+function secant(a,b){return (f(b)-f(a))/(b-a)}
+function mapX(x,xmin,xmax){return 70+(x-xmin)/(xmax-xmin)*(canvas.width-120)}
+function mapY(y,ymin,ymax){return canvas.height-60-(y-ymin)/(ymax-ymin)*(canvas.height-120)}
+
+function fixOrder(){
+  let a=getA(), b=getB();
+  if(b<=a+0.4){b=a+0.4;bSlider.value=b.toFixed(1)}
+  xSlider.min=(a+0.02).toFixed(2); xSlider.max=(b-0.02).toFixed(2);
+  let xi=getXi(); if(xi<=a) xSlider.value=(a+0.05).toFixed(2); if(xi>=b) xSlider.value=(b-0.05).toFixed(2);
+}
+function updateSlidersForFunction(){
+  const r=funcs[functionSelect.value].range;
+  aSlider.min=r[0]; aSlider.max=r[1]-1; bSlider.min=r[0]+1; bSlider.max=r[1];
+  aSlider.value=Math.max(r[0],Math.min(Number(aSlider.value),r[1]-1));
+  bSlider.value=Math.max(Number(aSlider.value)+1,Math.min(Number(bSlider.value),r[1]));
+  fixOrder(); update();
+}
+
+function draw(){
+  const a=getA(),b=getB(),xi=getXi(); const cfg=funcs[functionSelect.value];
+  const xmin=Number(aSlider.min),xmax=Number(bSlider.max);
+  let ys=[]; for(let i=0;i<=400;i++){let x=xmin+(xmax-xmin)*i/400;ys.push(f(x));}
+  let ymin=Math.min(...ys,f(a),f(b),f(xi))-1, ymax=Math.max(...ys,f(a),f(b),f(xi))+1;
+  ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+  for(let i=0;i<=10;i++){let x=70+i*(canvas.width-120)/10;ctx.beginPath();ctx.moveTo(x,40);ctx.lineTo(x,canvas.height-60);ctx.stroke();}
+  for(let i=0;i<=8;i++){let y=40+i*(canvas.height-100)/8;ctx.beginPath();ctx.moveTo(50,y);ctx.lineTo(canvas.width-50,y);ctx.stroke();}
+
+  const y0=mapY(0,ymin,ymax),x0=mapX(0,xmin,xmax);
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;
+  if(y0>40&&y0<canvas.height-60){ctx.beginPath();ctx.moveTo(50,y0);ctx.lineTo(canvas.width-45,y0);ctx.stroke();}
+  if(x0>50&&x0<canvas.width-50){ctx.beginPath();ctx.moveTo(x0,40);ctx.lineTo(x0,canvas.height-60);ctx.stroke();}
+
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=4;ctx.beginPath();
+  for(let i=0;i<=600;i++){let x=xmin+(xmax-xmin)*i/600,y=f(x),px=mapX(x,xmin,xmax),py=mapY(y,ymin,ymax); if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py)} ctx.stroke();
+
+  const ax=mapX(a,xmin,xmax), ay=mapY(f(a),ymin,ymax), bx=mapX(b,xmin,xmax), by=mapY(f(b),ymin,ymax);
+  ctx.strokeStyle='#f97316';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+
+  const m=df(xi), yxi=f(xi), len=1.2, tx1=xi-len, tx2=xi+len;
+  ctx.strokeStyle='#16a34a';ctx.lineWidth=4;ctx.setLineDash([10,7]);
+  ctx.beginPath();ctx.moveTo(mapX(tx1,xmin,xmax),mapY(yxi+m*(tx1-xi),ymin,ymax));ctx.lineTo(mapX(tx2,xmin,xmax),mapY(yxi+m*(tx2-xi),ymin,ymax));ctx.stroke();ctx.setLineDash([]);
+
+  drawPoint(ax,ay,'A','#f97316'); drawPoint(bx,by,'B','#f97316'); drawPoint(mapX(xi,xmin,xmax),mapY(yxi,ymin,ymax),'ξ','#16a34a');
+  ctx.fillStyle='#111827';ctx.font='bold 20px system-ui';ctx.fillText(cfg.name,70,34);
+  ctx.fillStyle='#f97316';ctx.fillText('χορδή ΑΒ', (ax+bx)/2-35, (ay+by)/2-12);
+  ctx.fillStyle='#16a34a';ctx.fillText('εφαπτομένη στο ξ', mapX(xi,xmin,xmax)+12, mapY(yxi,ymin,ymax)-20);
+}
+function drawPoint(x,y,label,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.stroke();ctx.fillStyle=color;ctx.font='bold 22px system-ui';ctx.fillText(label,x+12,y-12)}
+
+function update(){
+  fixOrder(); const a=getA(),b=getB(),xi=getXi(); const s=secant(a,b),d=df(xi),diff=Math.abs(s-d);
+  aVal.textContent=a.toFixed(1);bVal.textContent=b.toFixed(1);xVal.textContent=xi.toFixed(2);
+  secantVal.textContent=fmt(s);derVal.textContent=fmt(d);diffVal.textContent=fmt(diff);
+  if(diff<0.03){statusVal.textContent='ταιριάζει';statusVal.style.color='#15803d'}else{statusVal.textContent='όχι ακόμη';statusVal.style.color='#7c3aed'}
+  explainBox.innerHTML=`Στο διάστημα <b>[${a.toFixed(1)}, ${b.toFixed(1)}]</b>, η κλίση της χορδής είναι <b>${fmt(s)}</b>. Στο σημείο <b>ξ=${xi.toFixed(2)}</b>, η παράγωγος είναι <b>${fmt(d)}</b>. Όσο αυτές οι δύο τιμές πλησιάζουν, τόσο η εφαπτομένη γίνεται παράλληλη με τη χορδή.`;
+  draw();
+}
+function findXi(){
+  const a=getA(),b=getB(),target=secant(a,b); let best=a+0.01,bestDiff=Infinity;
+  for(let i=1;i<1000;i++){let x=a+(b-a)*i/1000,di=Math.abs(df(x)-target); if(di<bestDiff){best=x;bestDiff=di}}
+  xSlider.value=best.toFixed(2); update();
+}
+
+[aSlider,bSlider,xSlider].forEach(s=>s.addEventListener('input',update));
+functionSelect.addEventListener('change',updateSlidersForFunction); findBtn.addEventListener('click',findXi);
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');activeTab=t.dataset.tab;lesson.innerHTML=lessons[activeTab]}));
+
+const quizBank=[
+  {q:'Τι εκφράζει η ποσότητα [f(β)-f(α)]/(β-α);',choices:['Την τιμή της f στο α','Την κλίση της χορδής ΑΒ','Την ελάχιστη τιμή της f','Τη ρίζα της f'],answer:'Την κλίση της χορδής ΑΒ',why:'Είναι ο μέσος ρυθμός μεταβολής στο [α,β].'},
+  {q:'Ποια είναι η βασική γεωμετρική εικόνα του Θ.Μ.Τ.;',choices:['Μια εφαπτομένη παράλληλη στη χορδή','Μια κάθετη στον άξονα x','Δύο ίσες ρίζες','Μια ασύμπτωτη'],answer:'Μια εφαπτομένη παράλληλη στη χορδή',why:'Η ισότητα των κλίσεων σημαίνει παραλληλία.'},
+  {q:'Πού βρίσκεται το ξ;',choices:['Στο [α,β] απαραίτητα στα άκρα','Στο ανοικτό διάστημα (α,β)','Πάντα στο α','Πάντα στο β'],answer:'Στο ανοικτό διάστημα (α,β)',why:'Το θεώρημα εξασφαλίζει ξ εσωτερικό του διαστήματος.'},
+  {q:'Ποια προϋπόθεση αφορά το κλειστό διάστημα [α,β];',choices:['Παραγωγισιμότητα','Συνέχεια','Μονοτονία','Κυρτότητα'],answer:'Συνέχεια',why:'Η f πρέπει να είναι συνεχής στο [α,β].'},
+  {q:'Ποια προϋπόθεση αφορά το ανοικτό διάστημα (α,β);',choices:['Παραγωγισιμότητα','Να έχει ρίζα','Να είναι θετική','Να είναι σταθερή'],answer:'Παραγωγισιμότητα',why:'Η f πρέπει να είναι παραγωγίσιμη στο (α,β).'}
+];
+function newQuestion(){feedback.textContent='';currentQuestion=quizBank[Math.floor(Math.random()*quizBank.length)];questionText.textContent=currentQuestion.q;choices.innerHTML='';currentQuestion.choices.forEach(c=>{const btn=document.createElement('button');btn.className='choice';btn.textContent=c;btn.onclick=()=>checkAnswer(c);choices.appendChild(btn)})}
+function checkAnswer(c){if(c===currentQuestion.answer){feedback.style.color='#15803d';feedback.textContent='Σωστά. '+currentQuestion.why}else{feedback.style.color='#b91c1c';feedback.textContent='Όχι ακριβώς. '+currentQuestion.why}}
+newQuestionBtn.addEventListener('click',newQuestion);
+lesson.innerHTML=lessons.idea; updateSlidersForFunction(); newQuestion();
+</script>
+</body>
+</html>

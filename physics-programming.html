@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Θεατρικό Εργαστήρι: Πλάγια Βολή (Με Κάμερα)</title>
+    <style>
+        :root {
+            --primary: #2563eb; --primary-hover: #1d4ed8;
+            --text-dark: #0f172a; --text-light: #64748b;
+            --bg-color: #f1f5f9; --panel-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --success: #16a34a; --warning: #f59e0b; --danger: #ef4444;
+            --highlight: #fef08a; --code-bg: #f8fafc;
+            --screen-bg: #ffffff; --screen-text: #000000;
+        }
+
+        body.dark-mode {
+            --bg-color: #020617; --panel-bg: #1e293b;
+            --text-dark: #f8fafc; --text-light: #94a3b8;
+            --border-color: #334155; --code-bg: #0f172a;
+            --screen-bg: #e2e8f0; --screen-text: #000000;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background-color: var(--bg-color); color: var(--text-dark); 
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: 0.3s;
+        }
+
+        /* --- TOOLBAR --- */
+        .toolbar { 
+            background: var(--panel-bg); border-bottom: 1px solid var(--border-color); 
+            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100;
+        }
+        .toolbar-title { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px;}
+        .controls-group { display: flex; align-items: center; gap: 8px; flex-direction: row-reverse; flex-wrap: wrap;}
+
+        .tool-btn { 
+            padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color);
+            background: var(--panel-bg); color: var(--text-dark); cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; gap: 5px; font-size: 0.85rem; transition: 0.2s;
+        }
+        .tool-btn:hover:not(:disabled) { filter: brightness(0.9); }
+        .tool-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-execute { background: var(--danger); color: white; border: none; }
+        .btn-run { background: var(--primary); color: white; border: none; }
+        .btn-toggle { background: #64748b; color: white; border: none; }
+        .btn-camera { background: #10b981; color: white; border: none; }
+
+        .speed-control { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; font-weight: bold;}
+        .speed-control input { cursor: pointer; width: 60px;}
+
+        /* --- MAIN LAYOUT --- */
+        .main-container { display: flex; flex: 1; padding: 15px; gap: 15px; overflow: hidden; }
+        .col { 
+            background: var(--panel-bg); border-radius: 12px; border: 1px solid var(--border-color); 
+            display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .col-left { flex: 0 0 300px; padding: 20px; overflow-y: auto; line-height: 1.5;}
+        .theory-title { font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+        .theory-text { font-size: 0.85rem; margin-bottom: 15px; text-align: justify; }
+
+        .col-mid { flex: 1; display: flex; flex-direction: column; background: transparent; border: none; box-shadow: none; gap: 10px;} 
+        
+        .sim-container {
+            flex: 1; border-radius: 12px; border: 2px solid var(--border-color); 
+            position: relative; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: #000; transition: flex 0.3s;
+        }
+        #simCanvas { width: 100%; height: 100%; display: block; }
+        
+        .code-area { 
+            flex: 0 0 220px; padding: 15px; background: var(--code-bg); border: 1px solid var(--border-color); border-radius: 12px;
+            font-family: 'Consolas', monospace; font-size: 0.85rem; line-height: 1.4; overflow-y: auto; transition: 0.3s;
+        }
+        .code-line { padding: 1px 8px; border-radius: 4px; transition: 0.1s; white-space: pre; }
+        .code-line.active { background: var(--highlight); color: black; font-weight: bold; }
+        .kw { color: #0000CD; font-weight: bold; } body.dark-mode .kw { color: #60a5fa;}
+        .num { color: #ea580c; } body.dark-mode .num { color: #fb923c;}
+
+        .controls-overlay {
+            position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.95);
+            padding: 12px; border-radius: 8px; border: 2px solid var(--primary);
+            display: flex; flex-direction: column; gap: 8px; font-weight: bold; font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); color: black; z-index: 10;
+        }
+        .controls-overlay input { width: 60px; font-weight: bold; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px;}
+
+        /* HUD Overlay (Camera Mode) */
+        .hud-overlay {
+            position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7);
+            color: #10b981; font-family: monospace; font-size: 1rem; font-weight: bold;
+            padding: 10px 15px; border-radius: 8px; border: 1px solid #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); display: none; z-index: 10;
+        }
+
+        .col-right { flex: 0 0 260px; display: flex; flex-direction: column; }
+        .ram-section { padding: 15px; flex: 1; border-bottom: 1px solid var(--border-color); overflow-y: auto; }
+        .ram-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; }
+        .ram-table th { background: var(--bg-color); padding: 8px 2px; border: 1px solid var(--border-color); position: sticky; top: 0; }
+        .ram-table td { padding: 6px 2px; border: 1px solid var(--border-color); font-family: monospace; font-weight: bold;}
+        
+        .screen-section { padding: 15px; height: 180px; display: flex; flex-direction: column; }
+        .screen-display { 
+            flex: 1; background: var(--screen-bg); color: var(--screen-text); border: 2px solid var(--border-color);
+            padding: 12px; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 0.85rem; overflow-y: auto; line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+<header class="toolbar">
+    <div class="toolbar-title">🚀 Εργαστήριο Φυσικής: Πλάγια Βολή</div>
+    
+    <div class="controls-group">
+        <button class="tool-btn" onclick="document.body.classList.toggle('dark-mode')">🌙</button>
+        
+        <div class="speed-control" id="speedCtrl" style="display:none;">
+            🐢 <input type="range" id="speedSlider" min="50" max="1000" value="300" dir="rtl"> 🐇
+        </div>
+        
+        <button class="tool-btn btn-toggle" id="btnToggleCode" onclick="toggleCodeVisibility()">👁️ Εμφάνιση Κώδικα</button>
+        <button class="tool-btn btn-camera" id="btnCamera" onclick="toggleCamera()">🎥 Κάμερα Μπάλας</button>
+        <button class="tool-btn btn-run" id="btnStep" onclick="manualStep()" disabled>👣 Βήμα</button>
+        <button class="tool-btn btn-run" id="btnAuto" onclick="toggleAuto()" style="display:none;">▶️ Αυτόματα</button>
+        <button class="tool-btn btn-execute" id="btnExecute" onclick="prepareExecution()">🚀 Εκτόξευση</button>
+        <button class="tool-btn" onclick="initApp()">🔄 Αρχή</button>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="col col-left">
+        <div class="theory-title">Παράδειγμα 1</div>
+        <div class="theory-text">
+            Μια μπάλα η οποία εκτοξεύεται στον αέρα ακολουθεί μία <b>παραβολική τροχιά</b> μέχρι να πέσει πάλι στη γη. <br><br>
+            Αν θεωρήσουμε την αντίσταση του αέρα αμελητέα, το ύψος της μπάλας σε κάθε χρονική στιγμή δίνεται από τον τύπο:
+            <div style="background:var(--code-bg); padding:8px; border-radius:4px; margin:8px 0; font-family:serif; font-size:1rem; text-align:center; border-left: 3px solid var(--primary);">
+                Y(t) = y₀ + v<sub>y₀</sub>t - ½gt²
+            </div>
+            Η οριζόντια μετατόπιση (βεληνεκές) είναι:<br>
+            <div style="background:var(--code-bg); padding:8px; border-radius:4px; margin:8px 0; font-family:serif; font-size:1rem; text-align:center; border-left: 3px solid var(--primary);">
+                X(t) = v<sub>x₀</sub>t
+            </div>
+            Η τρέχουσα ταχύτητα της μπάλας υπολογίζεται:<br>
+            <b>V = √(V<sub>x</sub>² + V<sub>y</sub>²)</b>
+        </div>
+    </div>
+
+    <div class="col-mid">
+        <div class="sim-container" id="simBox">
+            <canvas id="simCanvas"></canvas>
+            
+            <div class="controls-overlay" id="controlsPanel">
+                <div style="display:flex; justify-content:space-between;">Γωνία θ: <input type="number" id="inTheta" value="45" oninput="updateCannon()">°</div>
+                <div style="display:flex; justify-content:space-between;">Ταχύτητα v₀: <input type="number" id="inV0" value="40" oninput="updateCode()"> m/s</div>
+            </div>
+
+            <div class="hud-overlay" id="hudOverlay">
+                <div style="color: #ef4444; margin-bottom:5px;">🔴 REC (Αργή Κίνηση)</div>
+                <div id="hudV">Ταχύτητα: 0.0 m/s</div>
+                <div id="hudY">Ύψος (Y): 0.0 m</div>
+            </div>
+        </div>
+
+        <div class="code-area" id="codeDisplay" style="display:none;">
+            </div>
+    </div>
+
+    <div class="col col-right">
+        <div class="ram-section">
+            <div class="theory-title" style="border:none;">📊 Πίνακας Τιμών</div>
+            <table class="ram-table">
+                <thead><tr><th>t (s)</th><th>x (m)</th><th>y (m)</th></tr></thead>
+                <tbody id="ramBody"></tbody>
+            </table>
+        </div>
+        <div class="screen-section">
+            <div class="theory-title" style="border:none;">🖥️ Έξοδος</div>
+            <div class="screen-display" id="screen"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const g = 9.81;
+    let canvas, ctx;
+    let state = { t: 0, x: 0, y: 0, v0: 40, theta: 45, vx0: 0, vy0: 0, points: [], pc: 0, isPlaying: false, isFinished: false, timer: null, maxY: 0 };
+    
+    let codeVisible = false;
+    let cameraMode = false; // Νέα Λειτουργία: FPV Κάμερα
+
+    function initApp() {
+        canvas = document.getElementById('simCanvas');
+        ctx = canvas.getContext('2d');
+        const box = document.getElementById('simBox');
+        canvas.width = box.clientWidth;
+        canvas.height = box.clientHeight;
+        
+        state.v0 = parseFloat(document.getElementById('inV0').value);
+        state.theta = parseFloat(document.getElementById('inTheta').value);
+        state.isFinished = false; state.pc = 0; state.t = 0; state.maxY = 0; state.points = [];
+        
+        document.getElementById('ramBody').innerHTML = "";
+        document.getElementById('screen').innerHTML = "";
+        document.getElementById('btnExecute').style.display = 'flex';
+        document.getElementById('btnAuto').style.display = 'none';
+        document.getElementById('btnStep').disabled = true;
+        
+        document.getElementById('inV0').disabled = false;
+        document.getElementById('inTheta').disabled = false;
+
+        updateCode();
+        drawScene();
+    }
+
+    function toggleCodeVisibility() {
+        codeVisible = !codeVisible;
+        const codeDiv = document.getElementById('codeDisplay');
+        const btn = document.getElementById('btnToggleCode');
+        const spd = document.getElementById('speedCtrl');
+
+        if (codeVisible) {
+            codeDiv.style.display = 'block';
+            btn.innerText = '🙈 Απόκρυψη Κώδικα';
+            btn.style.background = '#8b5cf6';
+            spd.style.display = 'flex';
+            if(cameraMode) toggleCamera(); // Απενεργοποίηση κάμερας αν ανοίξει ο κώδικας
+        } else {
+            codeDiv.style.display = 'none';
+            btn.innerText = '👁️ Εμφάνιση Κώδικα';
+            btn.style.background = '#64748b';
+            spd.style.display = 'none'; 
+        }
+        
+        setTimeout(() => {
+            const box = document.getElementById('simBox');
+            canvas.width = box.clientWidth;
+            canvas.height = box.clientHeight;
+            drawScene();
+        }, 350);
+    }
+
+    function toggleCamera() {
+        cameraMode = !cameraMode;
+        const btn = document.getElementById('btnCamera');
+        const hud = document.getElementById('hudOverlay');
+
+        if(cameraMode) {
+            btn.innerText = '🌍 Κανονική Οπτική';
+            btn.style.background = '#ef4444'; // Κόκκινο
+            hud.style.display = 'block';
+            if(codeVisible) toggleCodeVisibility(); // Κρύβουμε τον κώδικα στο FPV Mode
+        } else {
+            btn.innerText = '🎥 Κάμερα Μπάλας';
+            btn.style.background = '#10b981'; // Πράσινο
+            hud.style.display = 'none';
+        }
+        drawScene();
+    }
+
+    function updateCode() {
+        state.v0 = parseFloat(document.getElementById('inV0').value) || 40;
+        state.theta = parseFloat(document.getElementById('inTheta').value) || 45;
+        
+        const codeHTML = `
+<div class="code-line"><span class="kw">ΠΡΟΓΡΑΜΜΑ</span> Πλάγια_Βολή</div>
+<div class="code-line" id="L1">  v0 <- <span class="num">${state.v0}</span></div>
+<div class="code-line" id="L2">  θ <- <span class="num">${state.theta}</span></div>
+<div class="code-line" id="L3">  t <- <span class="num">0</span></div>
+<div class="code-line" id="L4">  <span class="kw">ΟΣΟ</span> y >= <span class="num">0</span> <span class="kw">ΕΠΑΝΑΛΑΒΕ</span></div>
+<div class="code-line" id="L5">    x <- v0 * <span class="kw">συν</span>(θ) * t</div>
+<div class="code-line" id="L6">    y <- v0 * <span class="kw">ημ</span>(θ) * t - <span class="num">0.5</span> * <span class="num">9.81</span> * t^2</div>
+<div class="code-line" id="L7">    t <- t + <span class="num">0.1</span></div>
+<div class="code-line" id="L8">  <span class="kw">ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ</span></div>
+<div class="code-line" id="L9">  <span class="kw">ΓΡΑΨΕ</span> x</div>
+<div class="code-line"><span class="kw">ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ</span></div>`;
+        document.getElementById('codeDisplay').innerHTML = codeHTML;
+    }
+
+    function drawScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const groundY = canvas.height - 40;
+        let scale = canvas.width / 150; // Κλίμακα (150 μέτρα ορατά συνήθως)
+        
+        let ballPx = 40 + state.x * scale;
+        let ballPy = groundY - state.y * scale;
+
+        // -- Υπολογισμός Κάμερας (Panning) --
+        let camX = 0; let camY = 0;
+
+        if (cameraMode) {
+            // Κάμερα Μπάλας: Κεντράρει την μπάλα στην οθόνη
+            camX = ballPx - canvas.width / 2;
+            camY = ballPy - canvas.height / 2;
+            if (camY > groundY - canvas.height + 100) camY = groundY - canvas.height + 100; // Όριο προς τα κάτω
+        } else {
+            // Έξυπνο Panning: Ακολουθεί αν βγει από την οθόνη
+            if (ballPx > canvas.width * 0.5) camX = ballPx - canvas.width * 0.5;
+            if (ballPy < canvas.height * 0.3) camY = ballPy - canvas.height * 0.3;
+        }
+
+        if (camX < 0) camX = 0;
+        if (camY > 0) camY = 0;
+
+        // 1. Σταθερός Ουρανός
+        let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, "#38bdf8"); grad.addColorStop(1, "#bae6fd");
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Ήλιος
+        ctx.fillStyle = "rgba(253, 224, 71, 0.9)";
+        ctx.beginPath(); ctx.arc(canvas.width - 80, 80, 40, 0, Math.PI*2); ctx.fill();
+
+        ctx.save();
+        ctx.translate(-camX, -camY);
+
+        // 3. Βουνά (Με ελαφρύ Parallax)
+        ctx.save();
+        ctx.translate(camX * 0.5, camY * 0.5); // Κινούνται πιο αργά
+        ctx.fillStyle = "#94a3b8";
+        ctx.beginPath(); ctx.moveTo(-500, groundY);
+        for(let i = -1; i < 10; i++) { // Σχεδιάζουμε πολλά βουνά για να μην τελειώνουν
+            let bx = i * 400;
+            ctx.quadraticCurveTo(bx + 150, groundY - 250, bx + 300, groundY);
+        }
+        ctx.lineTo(5000, canvas.height); ctx.lineTo(-500, canvas.height);
+        ctx.fill();
+        ctx.restore();
+
+        // 4. Πλέγμα (Δυναμικό, σχεδιάζεται μόνο όπου βλέπει η κάμερα)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)"; ctx.lineWidth = 1;
+        ctx.font = "11px Arial"; ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        
+        let startM = Math.floor(camX / scale / 10) * 10;
+        let endM = startM + Math.ceil(canvas.width / scale) + 20;
+        
+        for(let m = startM; m <= endM; m += 10) {
+            let px = 40 + m * scale;
+            ctx.beginPath(); ctx.moveTo(px, -2000); ctx.lineTo(px, groundY); ctx.stroke();
+            if(m >= 0 && m % 20 === 0) ctx.fillText(m + "m", px - 12, groundY + 15);
+        }
+
+        let topM = Math.floor(-camY / scale / 10) * 10 + 100;
+        for(let m = 0; m <= topM; m += 10) {
+            let py = groundY - (m * scale);
+            ctx.beginPath(); ctx.moveTo(-1000, py); ctx.lineTo(10000, py); ctx.stroke();
+            if(m > 0 && m % 20 === 0) ctx.fillText(m + "m", camX + 5, py - 4);
+        }
+
+        // 5. Έδαφος
+        ctx.fillStyle = "#22c55e"; ctx.fillRect(-1000, groundY, 10000, canvas.height);
+        ctx.fillStyle = "#166534"; ctx.fillRect(-1000, groundY, 10000, 4);
+
+        // 6. Κανόνι (Στο 0,0)
+        let cx = 40; let cy = groundY;
+        ctx.save();
+        ctx.translate(cx, cy); ctx.rotate(-state.theta * Math.PI / 180);
+        ctx.fillStyle = "#334155"; ctx.fillRect(-10, -12, 45, 24); 
+        ctx.fillStyle = "#0f172a"; ctx.fillRect(35, -14, 12, 28); 
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(cx, cy, 16, 0, Math.PI*2); ctx.fillStyle = "#b45309"; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = "#78350f"; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx-16, cy); ctx.lineTo(cx+16, cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy-16); ctx.lineTo(cx, cy+16); ctx.stroke();
+
+        // 7. Τροχιά (Ουρά)
+        ctx.beginPath();
+        ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+        state.points.forEach((p, i) => {
+            let px = 40 + p.x * scale; let py = groundY - (p.y * scale);
+            if(i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        ctx.stroke(); ctx.setLineDash([]);
+
+        // 8. Μπάλα
+        if(state.t > 0 && !state.isFinished) {
+            ctx.beginPath(); ctx.arc(ballPx, ballPy, 8, 0, Math.PI*2);
+            ctx.fillStyle = '#ef4444'; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+            // Στόχαστρο στην κάμερα μπάλας
+            if(cameraMode) {
+                ctx.strokeStyle = 'rgba(16, 185, 129, 0.8)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(ballPx, ballPy, 40, 0, Math.PI*2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(ballPx-50, ballPy); ctx.lineTo(ballPx+50, ballPy); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(ballPx, ballPy-50); ctx.lineTo(ballPx, ballPy+50); ctx.stroke();
+            }
+        }
+
+        ctx.restore(); // Τέλος Camera Translate
+    }
+
+    function updateCannon() {
+        state.theta = parseFloat(document.getElementById('inTheta').value) || 0;
+        updateCode();
+        drawScene();
+    }
+
+    function prepareExecution() {
+        document.getElementById('ramBody').innerHTML = "";
+        document.getElementById('screen').innerHTML = "> 💥 <b>Πυρ!</b><br>";
+        
+        let rad = state.theta * (Math.PI / 180);
+        state.vx0 = state.v0 * Math.cos(rad);
+        state.vy0 = state.v0 * Math.sin(rad);
+        
+        state.isFinished = false; state.t = 0; state.x = 0; state.y = 0; state.maxY = 0; state.points = [];
+        state.pc = 4;
+        
+        document.getElementById('inV0').disabled = true;
+        document.getElementById('inTheta').disabled = true;
+        document.getElementById('btnExecute').style.display = 'none';
+        document.getElementById('btnAuto').style.display = 'flex';
+        document.getElementById('btnStep').disabled = false;
+        
+        toggleAuto();
+    }
+
+    function stepLogic() {
+        if(state.isFinished) return;
+        
+        // Υπολογισμοί Φυσικής
+        state.x = state.vx0 * state.t;
+        state.y = state.vy0 * state.t - 0.5 * g * Math.pow(state.t, 2);
+        
+        if(state.y < 0) state.y = 0;
+        if(state.y > state.maxY) state.maxY = state.y;
+        
+        state.points.push({x: state.x, y: state.y});
+        addRamRow();
+
+        // Ενημέρωση HUD (Τηλεμετρία)
+        if(cameraMode) {
+            let currentVy = state.vy0 - g * state.t;
+            let currentV = Math.sqrt(Math.pow(state.vx0, 2) + Math.pow(currentVy, 2));
+            document.getElementById('hudV').innerText = `Ταχύτητα: ${currentV.toFixed(1)} m/s`;
+            document.getElementById('hudY').innerText = `Ύψος (Y): ${state.y.toFixed(1)} m`;
+        }
+
+        // Κώδικας Animation
+        if (codeVisible) {
+            document.querySelectorAll('.code-line').forEach(l => l.classList.remove('active'));
+            
+            // Loop Simulation (Απλοποιημένη για το Step)
+            if(state.pc === 4 && state.y <= 0 && state.t > 0) state.pc = 9;
+            else if(state.pc === 4) state.pc = 5;
+            else if(state.pc === 5) state.pc = 6;
+            else if(state.pc === 6) state.pc = 7;
+            else if(state.pc === 7) { state.t += 0.1; state.pc = 8; }
+            else if(state.pc === 8) state.pc = 4;
+            
+            document.getElementById('L' + state.pc).classList.add('active');
+            if(state.pc === 9) finishSim();
+        } else {
+            if (state.y <= 0 && state.t > 0) finishSim();
+            else state.t += 0.1;
+        }
+        
+        drawScene();
+    }
+
+    function addRamRow() {
+        // Δεν προσθέτουμε κάθε δεκαδικό αν είναι πολύ γρήγορο, για να μην κολλήσει ο πίνακας
+        if(!codeVisible && !cameraMode && Math.round(state.t * 10) % 5 !== 0 && state.y > 0) return; 
+
+        const r = document.createElement('tr');
+        r.innerHTML = `<td>${state.t.toFixed(1)}</td><td>${state.x.toFixed(1)}</td><td>${state.y.toFixed(1)}</td>`;
+        document.getElementById('ramBody').appendChild(r);
+        document.getElementById('ramBody').parentElement.scrollTop = 9999;
+    }
+
+    function finishSim() {
+        state.isFinished = true; state.isPlaying = false;
+        
+        let outHtml = `> Πτώση στο έδαφος!<br>`;
+        outHtml += `> <b>Βεληνεκές (X): <span style="color:var(--primary);">${state.x.toFixed(2)} m</span></b><br>`;
+        outHtml += `> <b>Μέγιστο Ύψος (Y): <span style="color:var(--danger);">${state.maxY.toFixed(2)} m</span></b>`;
+        
+        document.getElementById('screen').innerHTML += outHtml;
+        document.getElementById('btnAuto').style.display = 'none';
+        document.getElementById('btnStep').disabled = true;
+        
+        document.getElementById('inV0').disabled = false;
+        document.getElementById('inTheta').disabled = false;
+
+        if(codeVisible) {
+            document.querySelectorAll('.code-line').forEach(l => l.classList.remove('active'));
+            document.getElementById('L9').classList.add('active');
+        }
+    }
+
+    function toggleAuto() {
+        if(state.isFinished) return;
+        state.isPlaying = !state.isPlaying;
+        document.getElementById('btnAuto').innerText = state.isPlaying ? "⏸️ Παύση" : "▶️ Αυτόματα";
+        document.getElementById('btnAuto').style.background = state.isPlaying ? "var(--warning)" : "var(--primary)";
+        if(state.isPlaying) runLoop();
+    }
+
+    function runLoop() {
+        if(!state.isPlaying || state.isFinished) return;
+        stepLogic();
+        
+        let delay;
+        if (cameraMode) {
+            delay = 100; // Αργή κίνηση (FPV)
+        } else if (codeVisible) {
+            delay = 1100 - document.getElementById('speedSlider').value; // Συνδέεται με ρυθμιστή
+        } else {
+            delay = 40; // Ομαλή, γρήγορη Φυσική
+        }
+        
+        state.timer = setTimeout(runLoop, delay);
+    }
+
+    function manualStep() { 
+        if(state.isPlaying) toggleAuto(); 
+        stepLogic(); 
+    }
+
+    window.onload = initApp;
+    window.onresize = () => { initApp(); };
+</script>
+
+</body>
+</html>

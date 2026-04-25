@@ -7,13 +7,14 @@
 
     <style>
         :root {
-            /* Φωτεινά Gradients για τα 6 Εργαστήρια */
+            /* Φωτεινά Gradients για τα 7 Εργαστήρια */
             --grad-division: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
             --grad-tarzan: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);
             --grad-horner: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
             --grad-mean: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
             --grad-trig: linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%);
             --grad-physics: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+            --grad-kirchhoff: linear-gradient(135deg, #2563eb 0%, #22c55e 100%);
             
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -112,6 +113,7 @@
         .portal-card[data-cat="mean"] { background: var(--grad-mean); }
         .portal-card[data-cat="trig"] { background: var(--grad-trig); }
         .portal-card[data-cat="physics"] { background: var(--grad-physics); }
+        .portal-card[data-cat="kirchhoff"] { background: var(--grad-kirchhoff); }
 
         .portal-icon { 
             font-size: 5rem; 
@@ -182,6 +184,14 @@
                 <div class="portal-info">
                     <div class="portal-title">Η Φυσική του Ταρζάν</div>
                     <div class="portal-desc">Προσομοίωση της δυναμικής της κυκλικής κίνησης. Μελέτησε την κεντρομόλο δύναμη και την τάση του νήματος!</div>
+                </div>
+            </a>
+
+            <a href="kirchhoff.html" class="portal-card" data-cat="kirchhoff" target="_blank">
+                <div class="portal-icon">⚡</div>
+                <div class="portal-info">
+                    <div class="portal-title">2ος Νόμος Kirchhoff</div>
+                    <div class="portal-desc">Διαδραστική προσομοίωση ηλεκτρικού κυκλώματος. Παρακολούθησε την άνοδο και τις πτώσεις τάσης σε έναν κλειστό βρόχο.</div>
                 </div>
             </a>
 

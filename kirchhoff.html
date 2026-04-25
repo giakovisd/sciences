@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2ος Νόμος Kirchhoff - Τέλειος Συγχρονισμός</title>
+    <style>
+        :root {
+            --primary: #2563eb; --text-dark: #0f172a; --text-light: #64748b;
+            --bg-color: #f1f5f9; --panel-bg: #ffffff; --border-color: #cbd5e1;
+            --success: #16a34a; --danger: #ef4444; --electron: #fbbf24;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        /* 100% Ύψος χωρίς Scroll */
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); 
+            color: var(--text-dark); height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* TOOLBAR */
+        .toolbar { 
+            background: var(--panel-bg); border-bottom: 1px solid var(--border-color); 
+            padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; 
+            flex-shrink: 0; height: 50px;
+        }
+        .toolbar-title { font-weight: 800; color: var(--primary); font-size: 1.1rem; }
+
+        /* MAIN LAYOUT */
+        .main-container { 
+            display: flex; flex: 1; padding: 10px; gap: 10px; 
+            overflow: hidden; min-height: 0; /* Κρίσιμο για να μη βγαίνει εκτός οθόνης */
+        }
+        .col { 
+            background: var(--panel-bg); border-radius: 10px; border: 1px solid var(--border-color); 
+            display: flex; flex-direction: column; overflow: hidden; min-height: 0;
+        }
+
+        /* LEFT: Theory */
+        .col-left { flex: 0 0 250px; padding: 15px; overflow-y: auto; }
+        .theory-title { font-size: 1rem; font-weight: bold; margin-bottom: 8px; color: var(--primary); border-bottom: 2px solid var(--primary); }
+        .theory-text { font-size: 0.85rem; line-height: 1.4; margin-bottom: 10px; }
+
+        /* MID: Circuit & Graph */
+        .col-mid { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .anim-area { flex: 3; background: #fff; border-bottom: 1px solid var(--border-color); position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; }
+        .graph-area { flex: 2; background: #fafafa; padding: 5px 15px; position: relative; min-height: 0; display: flex; flex-direction: column; }
+        
+        /* RIGHT: Controls */
+        .col-right { flex: 0 0 260px; padding: 15px; overflow-y: auto;}
+        .slider-group { margin-bottom: 10px; }
+        .slider-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 2px; }
+        .slider-group input { width: 100%; cursor: pointer; }
+
+        .stat-card { background: var(--bg-color); padding: 8px; border-radius: 6px; margin-bottom: 6px; border-left: 4px solid var(--primary); }
+        .stat-label { font-size: 0.65rem; color: var(--text-light); text-transform: uppercase; }
+        .stat-value { font-size: 0.95rem; font-weight: bold; font-family: monospace;}
+
+        svg { width: 100%; height: 100%; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div class="toolbar-title">⚡ 2ος Νόμος Kirchhoff: Απόλυτος Συγχρονισμός</div>
+    <button onclick="resetSim()" style="padding: 5px 12px; cursor:pointer; border-radius:6px; border:1px solid #cbd5e1; font-weight: bold; background: white;">🔄 Επαναφορά</button>
+</div>
+
+<div class="main-container">
+    <div class="col col-left">
+        <div class="theory-title">Η Εκφώνηση</div>
+        <div class="theory-text">
+            Σε έναν κλειστό βρόχο που περιέχει πηγή (Ε, r) και δύο αντιστάτες (R1, R2), ισχύει ο 2ος Νόμος του Kirchhoff:
+            <br><center><strong>ΣV = 0</strong></center>
+        </div>
+        <div class="theory-title">Τι σημαίνει αυτό;</div>
+        <div class="theory-text" style="background: #fffbeb; padding: 8px; border-radius: 4px; border: 1px solid #fde68a;">
+            • <b>Άνοδος (+):</b> Καθώς το φορτίο περνά την πηγή, κερδίζει ενέργεια.<br>
+            • <b>Πτώση (-):</b> Περνώντας από τις αντιστάσεις, χάνει ενέργεια ως θερμότητα.
+        </div>
+        <div class="theory-text">
+            Η μπαλίτσα ακολουθεί τη <b>συμβατική φορά του ρεύματος</b> (δεξιόστροφα από το "+"). Το διάγραμμα κάτω δείχνει τις τιμές της τάσης (σε Volt) σε κάθε σημείο του κυκλώματος.
+        </div>
+    </div>
+
+    <div class="col col-mid">
+        <div class="anim-area">
+            <svg id="circuit-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid meet">
+                <rect x="80" y="30" width="240" height="140" fill="none" stroke="#475569" stroke-width="4" rx="6"/>
+                <rect x="65" y="80" width="30" height="40" fill="white"/>
+                <line x1="70" y1="90" x2="90" y2="90" stroke="black" stroke-width="4"/> <line x1="75" y1="100" x2="85" y2="100" stroke="black" stroke-width="2"/> <text x="55" y="94" font-size="14" font-weight="bold">+</text>
+                <text x="55" y="105" font-size="14" font-weight="bold">-</text>
+                <text x="95" y="98" font-size="12" font-weight="bold">E, r</text>
+                
+                <rect x="170" y="20" width="60" height="20" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+                <text x="188" y="15" font-size="12" fill="#ef4444" font-weight="bold">R1</text>
+                
+                <rect x="310" y="70" width="20" height="60" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+                <text x="335" y="105" font-size="12" fill="#16a34a" font-weight="bold">R2</text>
+                
+                <circle id="charge" r="7" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="graph-area">
+            <svg id="graph-svg" viewBox="0 0 400 130" preserveAspectRatio="xMidYMid meet">
+                <line x1="40" y1="110" x2="380" y2="110" stroke="#94a3b8" stroke-width="1"/>
+                <line x1="40" y1="10" x2="40" y2="110" stroke="#94a3b8" stroke-width="1"/>
+                
+                <polyline id="voltage-line" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/>
+                
+                <text id="lbl-E" x="0" y="0" font-size="10" font-weight="bold" fill="#2563eb"></text>
+                <text id="lbl-Vp" x="0" y="0" font-size="10" font-weight="bold" fill="#0f172a"></text>
+                <text id="lbl-VR1" x="0" y="0" font-size="10" font-weight="bold" fill="#ef4444"></text>
+                <text id="lbl-0" x="0" y="0" font-size="10" font-weight="bold" fill="#16a34a">0.0 V</text>
+                
+                <circle id="graph-dot" r="5" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+                
+                <text x="10" y="15" font-size="10" fill="#64748b" font-weight="bold">V (V)</text>
+                <text x="375" y="125" font-size="10" fill="#64748b" font-weight="bold">Θέση</text>
+            </svg>
+        </div>
+    </div>
+
+    <div class="col col-right">
+        <div class="slider-group">
+            <label>ΗΕΔ Πηγής (Ε): <span id="valE" style="color:var(--primary);">12</span> V</label>
+            <input type="range" id="inputE" min="5" max="24" value="12" oninput="update()">
+        </div>
+        <div class="slider-group">
+            <label>Εσωτερική Αντ. (r): <span id="valr" style="color:var(--primary);">1</span> Ω</label>
+            <input type="range" id="inputr" min="0" max="5" step="0.5" value="1" oninput="update()">
+        </div>
+        <div class="slider-group">
+            <label>Αντίσταση R1: <span id="valR1" style="color:var(--danger);">5</span> Ω</label>
+            <input type="range" id="inputR1" min="1" max="20" value="5" oninput="update()">
+        </div>
+        <div class="slider-group">
+            <label>Αντίσταση R2: <span id="valR2" style="color:var(--success);">10</span> Ω</label>
+            <input type="range" id="inputR2" min="1" max="20" value="10" oninput="update()">
+        </div>
+
+        <hr style="margin: 10px 0; border: 0; border-top: 1px solid var(--border-color);">
+
+        <div class="stat-card">
+            <div class="stat-label">Ένταση Ρεύματος (I)</div>
+            <div class="stat-value" id="statI">0.75 A</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--danger);">
+            <div class="stat-label">Πτώση στην R1 (V_R1)</div>
+            <div class="stat-value" id="statVR1">3.75 V</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--success);">
+            <div class="stat-label">Πτώση στην R2 (V_R2)</div>
+            <div class="stat-value" id="statVR2">7.50 V</div>
+        </div>
+        
+        <div style="font-size: 0.70rem; background: #e0f2fe; color: #0369a1; padding: 6px; border-radius: 6px; text-align: center; margin-top: 5px; font-family: monospace;">
+            E - I·r - I·R1 - I·R2 = 0
+        </div>
+    </div>
+</div>
+
+<script>
+    let progress = 0;
+
+    function update() {
+        const E = parseFloat(document.getElementById('inputE').value);
+        const r = parseFloat(document.getElementById('inputr').value);
+        const R1 = parseFloat(document.getElementById('inputR1').value);
+        const R2 = parseFloat(document.getElementById('inputR2').value);
+
+        document.getElementById('valE').innerText = E;
+        document.getElementById('valr').innerText = r;
+        document.getElementById('valR1').innerText = R1;
+        document.getElementById('valR2').innerText = R2;
+
+        const I = E / (r + R1 + R2);
+        const Vr = I * r, VR1 = I * R1, VR2 = I * R2;
+        const Vp = E - Vr;
+
+        document.getElementById('statI').innerText = I.toFixed(2) + " A";
+        document.getElementById('statVR1').innerText = VR1.toFixed(2) + " V";
+        document.getElementById('statVR2').innerText = VR2.toFixed(2) + " V";
+
+        // Υπολογισμός σημείων γραφήματος
+        const startX = 40, baseline = 110;
+        const sV = (v) => baseline - (v * (90 / 24)); // max 24V -> 90px ύψος (110 - 20)
+        
+        // Σημεία:
+        const pts = [
+            [startX, sV(0)],                 // 0: Αφετηρία 0V
+            [startX + 20, sV(E)],            // 1: Άνοδος Πηγής (Ε)
+            [startX + 50, sV(Vp)],           // 2: Πολική Τάση (μετά την r)
+            [startX + 130, sV(Vp)],          // 3: Πριν την R1
+            [startX + 180, sV(Vp - VR1)],    // 4: Μετά την R1
+            [startX + 260, sV(Vp - VR1)],    // 5: Πριν την R2
+            [startX + 300, sV(0)],           // 6: Μετά την R2
+            [startX + 360, sV(0)]            // 7: Επιστροφή (0V)
+        ];
+
+        document.getElementById('voltage-line').setAttribute('points', pts.map(p => p.join(',')).join(' '));
+
+        // Τοποθέτηση δυναμικών τιμών (Labels) πάνω στο γράφημα
+        const lblE = document.getElementById('lbl-E');
+        lblE.textContent = E.toFixed(1) + " V";
+        lblE.setAttribute('x', pts[1][0] - 5);
+        lblE.setAttribute('y', pts[1][1] - 8);
+
+        const lblVp = document.getElementById('lbl-Vp');
+        // Αν r=0, η Vp ταυτίζεται με την E, κρύβουμε τη μία ταμπέλα για να μην πέφτουν η μία πάνω στην άλλη
+        if (Vr > 0.1) {
+            lblVp.textContent = Vp.toFixed(1) + " V";
+            lblVp.setAttribute('x', pts[2][0] + 5);
+            lblVp.setAttribute('y', pts[2][1] - 8);
+            lblVp.style.display = "block";
+        } else {
+            lblVp.style.display = "none";
+        }
+
+        const lblVR1 = document.getElementById('lbl-VR1');
+        lblVR1.textContent = (Vp - VR1).toFixed(1) + " V";
+        lblVR1.setAttribute('x', pts[4][0] + 5);
+        lblVR1.setAttribute('y', pts[4][1] - 8);
+
+        const lbl0 = document.getElementById('lbl-0');
+        lbl0.setAttribute('x', pts[6][0] + 5);
+        lbl0.setAttribute('y', pts[6][1] - 8);
+
+        window.sim = { I, pts };
+    }
+
+    // Κλειδώνει την μπαλίτσα ακριβώς πάνω στη γραμμή του γραφήματος
+    function getGraphPoint(pts, progress) {
+        const segments = [
+            { p: 0.00, i: 0 }, { p: 0.15, i: 1 }, { p: 0.25, i: 2 },
+            { p: 0.40, i: 3 }, { p: 0.50, i: 4 }, { p: 0.65, i: 5 },
+            { p: 0.75, i: 6 }, { p: 1.00, i: 7 }
+        ];
+
+        for (let j = 0; j < segments.length - 1; j++) {
+            let pStart = segments[j].p;
+            let pEnd = segments[j+1].p;
+            if (progress >= pStart && progress <= pEnd) {
+                let localP = (progress - pStart) / (pEnd - pStart); 
+                let x = pts[segments[j].i][0] + localP * (pts[segments[j+1].i][0] - pts[segments[j].i][0]);
+                let y = pts[segments[j].i][1] + localP * (pts[segments[j+1].i][1] - pts[segments[j].i][1]);
+                return { x, y };
+            }
+        }
+        return { x: pts[7][0], y: pts[7][1] };
+    }
+
+    function animate() {
+        if (!window.sim) return;
+        progress += (window.sim.I * 0.003); // Ταχύτητα = f(Έντασης)
+        if (progress > 1) progress = 0;
+
+        const charge = document.getElementById('charge');
+        const dot = document.getElementById('graph-dot');
+        let cx, cy;
+
+        // Συγχρονισμός Κυκλώματος 
+        if (progress < 0.15) { 
+            let p = progress / 0.15; cx = 80; cy = 90 - (p * 60);
+        } else if (progress < 0.25) { 
+            cx = 80; cy = 30;
+        } else if (progress < 0.40) { 
+            let p = (progress - 0.25) / 0.15; cx = 80 + (p * 90); cy = 30;
+        } else if (progress < 0.50) { 
+            let p = (progress - 0.40) / 0.10; cx = 170 + (p * 60); cy = 30;
+        } else if (progress < 0.65) { 
+            let p = (progress - 0.50) / 0.15;
+            let dist = p * 130; 
+            if (dist <= 90) { cx = 230 + dist; cy = 30; }
+            else { cx = 320; cy = 30 + (dist - 90); }
+        } else if (progress < 0.75) { 
+            let p = (progress - 0.65) / 0.10; cx = 320; cy = 70 + (p * 60);
+        } else { 
+            let p = (progress - 0.75) / 0.25;
+            let dist = p * 340; 
+            if (dist <= 40) { cx = 320; cy = 130 + dist; }
+            else if (dist <= 280) { cx = 320 - (dist - 40); cy = 170; }
+            else { cx = 80; cy = 170 - (dist - 280); }
+        }
+
+        charge.setAttribute('cx', cx); charge.setAttribute('cy', cy);
+
+        // Συγχρονισμός Γραφήματος
+        let graphPos = getGraphPoint(window.sim.pts, progress);
+        dot.setAttribute('cx', graphPos.x); dot.setAttribute('cy', graphPos.y);
+        
+        requestAnimationFrame(animate);
+    }
+
+    function resetSim() {
+        document.getElementById('inputE').value = 12; document.getElementById('inputr').value = 1;
+        document.getElementById('inputR1').value = 5; document.getElementById('inputR2').value = 10;
+        update();
+    }
+
+    update(); animate();
+</script>
+</body>
+</html>
